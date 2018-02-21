@@ -1,0 +1,11 @@
+.Rproj.user
+.Rproj.user/
+.Rapp.history
+.Rhistory
+.Ruserdata
+.DS_Store
+.RData
+*.utf8.md
+*.knit.md
+/*_cache/
+/cache/
