@@ -9,7 +9,10 @@ output:
 
 ####Overview and Motivation:
 
-Provide an overview of the project goals and the motivation for it. Consider that this will be read by people who did not see your project proposal.
+In a few weeks the “Forum des 100” will be held at the University of Lausanne. This year we will discuss mobility in Switzerland, and in particular its future. We therefore ask ourselves whether there is a certain trend in the evolution of practices (in terms of passenger transport in particular). We both changed our behavior regarding transportation over the years for various reasons: practical, economic, health, even personal reasons (ecology etc.) or because public authorities have encouraged the use of a particular mean of transport. Now that other means are under study or already in development (flying cars, drones, hyperloop, etc) we are curious to explore a bit the overall situation and behavioral changes of other users in recent years.
+
+The project goal is to have a better understanding of transportation dynamics that exist in our country. We will try to identify correlations and other causal links.
+Understanding market past & current behavior helps to define needs, risks and eventually solutions for the future. We believe that having this information in mind can help decision makers. 
 
 ####Related Work: 
 
@@ -18,6 +21,9 @@ Anything that inspired you, such as a paper, a website, or something we discusse
 ####Initial Questions: 
 
 What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?
+
+- How has the development of public transport affected the use of private vehicles over the years? To what extent? 
+- What is the link between the investments made in improving public transport networks and the fluctuations in their use? 
 
 ####Data: 
 
@@ -34,3 +40,28 @@ What are the different statistical methods you considered? Why did you choose a 
 ####Final Analysis: 
 
 What did you learn about the data? How did you answer the questions? How can you justify your answers?
+
+###R init
+
+```{r setup, warning = FALSE, message = FALSE}
+library(knitr)
+library(tidyverse)
+library(lubridate)
+library(modelr)
+library(broom)
+library(ggrepel)
+library(forcats)
+library(directlabels)
+library(ggrepel)
+```
+
+```{r setup2, message = FALSE}
+digits <- 3 # set precision digits
+mec_tourisme <- read.csv(file = "../data/mec_tourisme.csv") %>% as.tibble()
+```
+
+###Observations
+
+```{r}
+
+```
