@@ -1,0 +1,36 @@
+---
+title: "Project Report"
+author: "Bron, Luca and Lapierre, Hadrien"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+####Overview and Motivation:
+
+Provide an overview of the project goals and the motivation for it. Consider that this will be read by people who did not see your project proposal.
+
+####Related Work: 
+
+Anything that inspired you, such as a paper, a website, or something we discussed in class.
+
+####Initial Questions: 
+
+What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?
+
+####Data: 
+
+Source, scraping method, cleanup, etc.
+
+####Exploratory Analysis: 
+
+What visualizations did you use to look at your data in different ways? Justify the decisions you made, and show any major changes to your ideas. How did you reach these conclusions?
+
+####Modeling: 
+
+What are the different statistical methods you considered? Why did you choose a given model? How about competing approaches?
+
+####Final Analysis: 
+
+What did you learn about the data? How did you answer the questions? How can you justify your answers?
