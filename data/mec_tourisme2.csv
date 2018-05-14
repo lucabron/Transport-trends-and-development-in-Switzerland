@@ -1,0 +1,57 @@
+Type,"Carburant","2005","2006","2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017"
+Voitures de tourisme,"Essence",185120,185807,185055,189151,182174,200576,211540,200576,185070,180875,185469,178666,183637
+Voitures de tourisme,"Diesel",74114,80857,92333,93366,78755,90547,109324,124911,115656,113304,127899,125595,113848
+Voitures de tourisme,"Essence-electrique",0,1271,3220,3091,3899,4246,5444,5721,6193,6165,7676,9949,11564
+Voitures de tourisme,"Diesel-electrique",0,1,0,1,1,4,18,987,965,728,1109,638,282
+Voitures de tourisme,"Electrique",13,9,19,24,57,201,452,924,1392,1948,3882,3525,4929
+Voitures de tourisme,"Gaz (monovalent et bivalent)",442,1064,1653,1136,1063,721,651,519,791,1041,1080,944,769
+Voitures de tourisme,"Autre",993,739,1692,1202,529,302,526,407,87,22,28,14,3
+Voitures de tourisme,"Sans moteur",0,0,0,0,0,0,0,0,0,0,0,0,0
+Vehicules de transport de personnes,"Essence",137,137,157,133,65,55,46,58,57,40,56,70,61
+Vehicules de transport de personnes,"Diesel",2507,2473,2409,3045,2754,3014,3870,4228,4053,4110,4907,5069,5509
+Vehicules de transport de personnes,"Essence-electrique",0,0,0,1,0,2,0,1,1,0,2,0,0
+Vehicules de transport de personnes,"Diesel-electrique",0,0,3,2,3,6,21,20,21,12,24,30,24
+Vehicules de transport de personnes,"Electrique",2,2,0,1,1,2,3,3,4,3,3,2,8
+Vehicules de transport de personnes,"Gaz (monovalent et bivalent)",0,23,36,39,17,44,6,10,2,1,2,3,4
+Vehicules de transport de personnes,"Autre",139,44,32,3,3,0,4,1,0,1,1,1,1
+Vehicules de transport de personnes,"Sans moteur",0,0,0,0,0,0,0,0,0,0,0,0,0
+Vehicules de transport de choses,"Essence",3130,3496,3127,3611,3398,3425,3511,3260,2927,3119,3204,3000,3287
+Vehicules de transport de choses,"Diesel",20196,22456,24546,25737,22010,24025,29342,30763,29330,29968,31765,31423,33841
+Vehicules de transport de choses,"Essence-electrique",0,0,0,1,3,0,1,0,1,0,1,0,0
+Vehicules de transport de choses,"Diesel-electrique",0,0,0,0,0,0,3,5,6,2,4,6,3
+Vehicules de transport de choses,"Electrique",11,1,3,9,5,11,13,150,121,95,164,181,193
+Vehicules de transport de choses,"Gaz (monovalent et bivalent)",187,281,373,346,436,266,249,267,246,220,151,170,174
+Vehicules de transport de choses,"Autre",11,18,6,2,1,0,0,2,2,1,1,1,1
+Vehicules de transport de choses,"Sans moteur",0,0,0,0,0,0,0,0,0,0,0,0,0
+Vehicules agricoles,"Essence",137,97,125,154,138,125,134,135,110,113,85,91,103
+Vehicules agricoles,"Diesel",3199,2967,2900,3066,2993,3128,3574,3814,3467,3208,3651,3216,3192
+Vehicules agricoles,"Essence-electrique",0,0,0,0,0,0,0,0,0,0,1,0,0
+Vehicules agricoles,"Diesel-electrique",0,0,0,2,0,1,0,0,1,2,1,0,1
+Vehicules agricoles,"Electrique",2,2,2,3,1,8,6,2,5,2,1,7,12
+Vehicules agricoles,"Gaz (monovalent et bivalent)",0,1,0,0,0,0,0,0,0,0,1,0,0
+Vehicules agricoles,"Autre",33,7,7,2,2,0,0,0,0,1,0,0,0
+Vehicules agricoles,"Sans moteur",0,0,0,0,0,0,0,0,0,0,0,0,0
+Vehicules industriels,"Essence",161,156,211,227,249,216,243,260,234,211,244,274,296
+Vehicules industriels,"Diesel",2645,2912,2935,3229,3162,3153,3497,3889,3806,3583,3703,3620,3530
+Vehicules industriels,"Essence-electrique",0,0,0,1,1,2,0,1,1,0,0,3,0
+Vehicules industriels,"Diesel-electrique",0,0,1,4,4,0,1,2,0,1,1,6,0
+Vehicules industriels,"Electrique",136,145,172,217,169,189,244,235,226,268,243,293,288
+Vehicules industriels,"Gaz (monovalent et bivalent)",8,7,9,14,16,17,20,17,18,20,22,13,12
+Vehicules industriels,"Autre",62,21,23,2,3,0,1,0,0,3,0,1,0
+Vehicules industriels,"Sans moteur",0,0,0,0,0,0,0,0,0,0,0,0,0
+ Motocycles,"Essence",44927,45464,47698,48244,44104,41566,45626,46928,45027,45654,50075,46768,46242
+ Motocycles,"Diesel",89,67,73,63,48,52,73,36,49,39,37,37,28
+ Motocycles,"Essence-electrique",0,1,2,6,3,32,8,7,15,6,1,2,1
+ Motocycles,"Diesel-electrique",0,0,0,0,0,0,0,2,0,0,0,0,0
+ Motocycles,"Electrique",127,73,129,459,762,1380,2420,2829,2232,1822,1673,1366,982
+ Motocycles,"Gaz (monovalent et bivalent)",0,0,0,0,0,0,1,0,1,0,0,0,2
+ Motocycles,"Autre",87,60,36,2,0,1,3,3,0,0,1,2,0
+ Motocycles,"Sans moteur",0,0,0,0,0,0,0,0,0,0,0,0,0
+ Remorques,"Essence",0,0,0,0,0,0,0,0,0,0,0,0,0
+ Remorques,"Diesel",0,0,0,0,0,0,0,0,0,0,0,0,0
+ Remorques,"Essence-electrique",0,0,0,0,0,0,0,0,0,0,0,0,0
+ Remorques,"Diesel-electrique",0,0,0,0,0,0,0,0,0,0,0,0,0
+ Remorques,"Electrique",0,0,0,0,0,0,0,0,0,0,0,0,0
+ Remorques,"Gaz (monovalent et bivalent)",0,0,0,0,0,0,0,0,0,0,0,0,0
+ Remorques,"Autre",0,0,0,0,0,0,0,0,0,0,0,0,0
+ Remorques,"Sans moteur",18073,19143,18908,19311,18258,19485,22205,21882,22017,21952,22309,20895,21140
