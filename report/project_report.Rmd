@@ -9,7 +9,9 @@ output:
 
 ####Overview and Motivation:
 
-In a few weeks the “Forum des 100” will be held at the University of Lausanne. This year we will discuss mobility in Switzerland, and in particular its future. We therefore ask ourselves whether there is a certain trend in the evolution of practices (in terms of passenger transport in particular). We both changed our behavior regarding transportation over the years for various reasons: practical, economic, health, even personal reasons (ecology etc.) or because public authorities have encouraged the use of a particular mean of transport. Now that other means are under study or already in development (flying cars, drones, hyperloop, etc) we are curious to explore a bit the overall situation and behavioral changes of other users in recent years.
+In a few weeks the “Forum des 100” will be held at the University of Lausanne. This year we will discuss mobility in Switzerland, and in particular its future. We therefore ask ourselves whether there is a certain trend in the evolution of practices (in terms of passenger transport in particular). We both changed our behavior regarding transportation over the years for various reasons: practical, economic, health, even personal reasons (ecology etc.) or because public authorities have encouraged the use of a particular mean of transport. 
+
+Now that other means are under study or already in development (flying cars, drones, hyperloop, etc) we are curious to explore a bit the overall situation and behavioral changes of other users in recent years.
 
 The project goal is to have a better understanding of transportation dynamics that exist in our country. We will try to identify correlations and other causal links.
 Understanding market past & current behavior helps to define needs, risks and eventually solutions for the future. We believe that having this information in mind can help decision makers. 
@@ -20,18 +22,12 @@ Anything that inspired you, such as a paper, a website, or something we discusse
 
 ####Initial Questions: 
 
-What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?
-
+- What is the vehicle fleet composition in Switzerland? Are electric cars popular?
 - How has the development of public transport affected the use of private vehicles over the years? To what extent? 
-- What is the link between the investments made in improving public transport networks and the fluctuations in their use? 
 
 ####Data: 
 
 Source, scraping method, cleanup, etc.
-
-####Exploratory Analysis: 
-
-What visualizations did you use to look at your data in different ways? Justify the decisions you made, and show any major changes to your ideas. How did you reach these conclusions?
 
 ####Modeling: 
 
@@ -43,7 +39,7 @@ What did you learn about the data? How did you answer the questions? How can you
 
 ###R init
 
-```{r setup, warning = FALSE, message = FALSE}
+```{r setup, echo = FALSE, warning = FALSE, message = FALSE}
 library(knitr)
 library(tidyverse)
 library(lubridate)
@@ -53,15 +49,54 @@ library(ggrepel)
 library(forcats)
 library(directlabels)
 library(ggrepel)
+library(readxl)
 ```
 
-```{r setup2, message = FALSE}
-digits <- 3 # set precision digits
-mec_tourisme <- read.csv(file = "../data/mec_tourisme.csv") %>% as.tibble()
+```{r setup2, echo = FALSE, message = FALSE}
+options(digits = 3) # set precision digits
+
+#Init import
+parc_tourisme <- read_csv(file = "../data/parc_tourisme_90.csv") %>% as.tibble()
+mec_tourisme <- read_csv(file = "../data/mec_tourisme2.csv") %>% as.tibble()
+
+#Growth rate calculations
+parc_growth <- parc_tourisme %>% 
+  transmute(Carburant = Carburant, "2000" = NA, "2001" = (X2001/X2000 - 1), "2002" = (X2002/X2001 - 1), "2003" = (X2003/X2002 - 1), "2004" = (X2004/X2003 - 1), "2005" = (X2005/X2004 - 1), "2006" = (X2006/X2005 - 1) , "2007" = (X2007/X2006 - 1), "2008" = (X2008/X2007 - 1), "2009" = (X2009/X2008 - 1), "2010" = (X2010/X2009 - 1), "2011" = (X2011/X2010 - 1), "2012" = (X2012/X2011 - 1), "2013" = (X2013/X2012 - 1), "2014" = (X2014/X2013 - 1), "2015" = (X2015/X2014 - 1), "2016" = (X2016/X2015 - 1), "2017" = (X2017/X2016 - 1))
+
+#Growth rate formating
+parc_growth <- parc_growth %>% gather(`2000`, `2001`, `2002`, `2003`, `2004`, `2005`, `2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, `2013`, `2014`, `2015`, `2016`, `2017` , key = "Annee", value = "T")
+parc_growth <- parc_growth %>% mutate(Annee = as.numeric(Annee))
+
+#mec_tourism formating
+mec_tourisme <- mec_tourisme %>% gather(`X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017` , key = "Annee", value = "N")
+mec_tourisme <- mec_tourisme %>% mutate(Annee = substring(Annee,2))
+mec_tourisme <- mec_tourisme %>% mutate(Annee = as.numeric(Annee))
+
+#parc_tourism formating
+parc_tourisme <- parc_tourisme %>% gather(`X2000`, `X2001`, `X2002`, `X2003`, `X2004`, `X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017`, key = "Annee", value = "N")
+parc_tourisme <- parc_tourisme %>% mutate(Annee = substring(Annee,2))
+parc_tourisme <- parc_tourisme %>% mutate(Annee = as.numeric(Annee))
 ```
 
-###Observations
+####Exploratory Analysis: 
 
+To begin with, we looked passenger cars in Switzerland and particularly their fuel: we see on the graph below that electric vehicles are gradually making their way onto Swiss roads. Even if the electric proportion in the total number of vehicles put into service remains relatively low, we can see from the following graph that there is indeed a trend towards this new propulsion.
 ```{r}
+mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% 
+  ggplot() + geom_bar(aes(x=Annee,  y=N, fill=fct_reorder(Carburant,N)), position = "fill", stat="identity") +
+  labs(title="Proportion of passenger cars put into circulation in Switzerland",x="Year", y="Proportion", fill="Fuel") +
+  scale_fill_brewer(palette="Paired")
+```
 
+Indeed while the growth rates of diesel and petrol cars have stagnated for several years, the growth rate of electric vehicles is relatively high since 2009 and demonstrates a booming market.
+
+```{r warning = FALSE}
+#Let's remove Inf data
+parc_growth %>% filter(Carburant != "Autres")  %>% 
+  ggplot(aes(x=Annee, y=T, color=Carburant, na.rm = TRUE)) + 
+  geom_line() + scale_y_continuous(labels = scales::percent) + 
+  labs(title="Passenger car fleet Growth per year and fuel type", x="Year", y="Growth Rate") + 
+  geom_label_repel(data = . %>% filter(Annee == "2017") %>% mutate(T = round(T,2)), aes(x=Annee, y=T, label = T))
+
+parc_growth %>% filter(Annee == 2017, Carburant != "Autres") %>% kable()
 ```
