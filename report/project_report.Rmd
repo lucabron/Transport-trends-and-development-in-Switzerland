@@ -7,40 +7,6 @@ output:
   pdf_document: default
 ---
 
-# Introduction
-## Overview and Motivation:
-
-Last week the “Forum des 100” was held at the University of Lausanne. This year one of the key subject was mobility in Switzerland, and in particular its future. We therefore ask ourselves whether there is a certain trend in the evolution of practices (in terms of passenger transport in particular). We both changed our behavior regarding transportation over the years for various reasons: practical, economic, health, even personal reasons (ecology etc.) or because public authorities have encouraged the use of a particular mean of transport. Now that other means are under study or already in development (flying cars, drones, hyperloop, etc) we are curious to explore a bit the overall situation and behavioral changes of other users in recent years.
-
-The project goal is to have a better understanding of transportation dynamics that exist in our country. We will try to identify correlations and other causal links.
-Understanding market past & current behavior helps to define needs, risks and eventually solutions for the future. We believe that having this information in mind can help decision makers. 
-
-## Related Work: 
-
-Anything that inspired you, such as a paper, a website, or something we discussed in class.
-
-####Initial Questions: 
-
-What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?
-
-- How has the development of public transport affected the use of private vehicles over the years? To what extent? 
-- What is the link between the investments made in improving public transport networks and the fluctuations in their use? 
-
-
-
-####Exploratory Analysis: 
-
-What visualizations did you use to look at your data in different ways? Justify the decisions you made, and show any major changes to your ideas. How did you reach these conclusions?
-
-####Modeling: 
-
-What are the different statistical methods you considered? Why did you choose a given model? How about competing approaches?
-
-####Final Analysis: 
-
-What did you learn about the data? How did you answer the questions? How can you justify your answers?
-
-###R init
 ```{r setup, echo = FALSE, warning = FALSE, message = FALSE}
 #loading packages
 library(knitr)
@@ -53,12 +19,45 @@ library(forcats)
 library(directlabels)
 library(ggrepel)
 library(readxl)
+library(scales)
 ```
 
-####Data
+# Introduction
+## Overview and Motivation:
+
+Last week the “Forum des 100” was held at the University of Lausanne. This year one of the key subject was mobility in Switzerland, and in particular its future. We therefore ask ourselves whether there is a certain trend in the evolution of practices (in terms of passenger transports in particular). We both changed our behavior regarding transportation over the years for various reasons: practical, economic, health, even personal reasons (ecology etc.) or because public authorities have encouraged the use of a particular mean of transport. Now that other means are under study or already in development (flying cars, drones, hyperloop, etc) we are curious to explore a bit the overall situation and behavioral changes of other users in recent years.
+
+The project goal is to have a better understanding of transportation dynamics that exist in our country. We will try to identify correlations and other causal links, particularly with the help of market data analysis.
+Understanding market past & current behavior helps to define needs, risks and eventually solutions for the future. We believe that having this information in mind can help decision makers.
+
+## Related Work: 
+
+Anything that inspired you, such as a paper, a website, or something we discussed in class.
+
+## Initial Questions: 
+
+At first, we have defined the following research questions :
+
+- How has the development of public transport affected the use of private vehicles over the years? To what extent? 
+- What is the link between the investments made in improving public transport networks and the fluctuations in their use?
+
+However, in the course of our analysis we figured the data available to us were not sufficient/precise enough to answer these questions.
+
+In addition, in light of our research and the Forum des 100, we are now convinced that the development of transport and more generally mobility will be largely driven by energy considerations. 
+
+**Where do we stand with green mobility in Switzerland ? Have awareness, scientific progress, bonus policies for ecological vehicles etc. really impacted our mobility consumption?**
+Therefore we adress these questions in this report.
+
+## Data
+
+We used data from the Office Fédéral de la Statistique (OFS) mainly : 
+
+- Road vehicle fleet by vehicle group and vehicle type from 1990 to 2017 (retrieve from [OFS website](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.assetdetail.4382325.html))
+
 
 Source, scraping method, cleanup, etc.
-```{r setup2, echo = FALSE, message = FALSE}
+
+```{r setup2, echo = FALSE, message=FALSE}
 options(digits = 3) # set precision digits
 
 #Init import
@@ -74,14 +73,9 @@ parc_growth <- parc_tourisme %>%
 parc_growth <- parc_growth %>% gather(`2000`, `2001`, `2002`, `2003`, `2004`, `2005`, `2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, `2013`, `2014`, `2015`, `2016`, `2017` , key = "Annee", value = "T")
 parc_growth <- parc_growth %>% mutate(Annee = as.numeric(Annee))
 
-#mec_tourism formating (old R version)
-# mec_tourisme <- mec_tourisme %>% gather(`X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017` , key = "Annee", value = "N")
-# mec_tourisme <- mec_tourisme %>% mutate(Annee = substring(Annee,2))
-
-#mec_tourism formating (new R version)
-mec_tourisme <- mec_tourisme %>% gather(`2005`, `2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, `2013`, `2014`, `2015`, `2016`, `2017` , key = "Annee", value = "N")
-mec_tourisme <- mec_tourisme %>% mutate(Annee = as.numeric(Annee))
-
+#mec_tourism formating
+ mec_tourisme <- mec_tourisme %>% gather(`X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017` , key = "Annee", value = "N")
+mec_tourisme <- mec_tourisme %>% mutate(Annee = substring(Annee,2))
 
 #parc_tourism formating
 parc_tourisme <- parc_tourisme %>% gather(`X2000`, `X2001`, `X2002`, `X2003`, `X2004`, `X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017`, key = "Annee", value = "N")
@@ -94,9 +88,11 @@ parc_moto <- parc_moto %>% gather(`1990`, `1991`, `1992`, `1993`, `1994`, `1995`
 parc_moto <- parc_moto %>% mutate(Annee = as.numeric(Annee))
 ```
 
-## Exploratory Analysis: 
+# Exploratory Analysis:
 
-To begin with, we looked passenger cars in Switzerland and particularly their fuel type. We see on the graph below that electric vehicles are gradually making their way onto Swiss roads. Even if the electric proportion in the total number of vehicles put into service remains relatively low, we can see from the following graph that there is indeed a trend towards this new mean of propulsion. The data are from the `r mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% summarise(sum(N,na.rm = TRUE)) %>% kable(col.names = "Total passenger cars put into circulation between 2005 and 2017.")` cars  put into circulation between 2005 and 2017.
+## Green Mobility in Switzerland
+
+To begin with, we looked passenger cars in Switzerland and particularly their fuel type. We see on the graph below that electric vehicles are gradually making their way onto Swiss roads. Even if the electric proportion in the total number of vehicles put into service remains relatively low, we can see from the following graph that there is indeed a trend towards this new mean of propulsion. The data are from the `r mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% summarise(sum(N,na.rm = TRUE))` cars  put into circulation between 2005 and 2017.
 
 ```{r echo = FALSE}
 mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% 
@@ -117,7 +113,7 @@ parc_growth %>% filter(Carburant != "Autres")  %>%
   scale_color_discrete(labels=c("Diesel","Electric","Gasoline"))
 ```
 
-Now let's take a look at the passenger transport vehicles (light automobiles, heavy automobiles, buses, minibuses) put into circulation in Switzerland for the last decade. It seems that 99% of the 50'000 vehicles put into circulation are diesel-powered. The data are from the `r mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% summarise(sum(N,na.rm = TRUE)) %>% kable(col.names = "Total passenger transport vehicles put into circulation between 2005 and 2017.")` cars  put into circulation between 2005 and 2017.
+Now let's take a look at the road passenger transport vehicles (light automobiles, heavy automobiles, buses, minibuses) put into circulation in Switzerland for the last decade. It seems that 99% of the 50'000 vehicles put into circulation are diesel-powered. The data are from the `r mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% summarise(sum(N,na.rm = TRUE))` cars  put into circulation between 2005 and 2017.
 
 ```{r echo = FALSE}
 mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% 
@@ -126,24 +122,44 @@ mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>%
   scale_fill_brewer(palette="Paired",labels=c("Electric-gasoline","No engine","Other", "Electric","Gas","Diesel-electric", "Gasoline","Diesel"))
 ```
 
+To be honest, these numbers are quite suprising for us. Before looking at these data, we thought that public transportations would be the first to make the energy transition ! But it appears the cost for hybrid or electric buses and other public transport is still too high to compete with regular diesel.
+
+To go further :
+
+- [After five years of testing, CarPostal gives up fuel cell buses (fr)](https://www.rts.ch/info/suisse/8355006-apres-un-test-de-cinq-ans-carpostal-renonce-aux-bus-a-pile-a-combustible.html)
+
+- [Electric and hybrid buses on Swiss roads (fr)](https://www.ecolive.ch/prestations/climat/projets/suisse-bus/)
+
+In 2016 however, Geneva Public Transportations [placed an order for 100% eclectric buses](https://www.letemps.ch/economie/tpg-passent-commande-bus-100-electriques) for one line only which looks like a test more than a definitive transition. The buses took the road in early 2018 but due to technical issues, [they did not take any passengers this year](https://www.rts.ch/info/regions/geneve/9171449-pas-de-passagers-avant-2018-pour-le-bus-electrique-tosa-a-geneve.html)
+
+For the time being, it would appear that the energy transition for public transports is not imminent.
+
 Finally we will take a look at motorcycles :
 
 ```{r echo = FALSE} 
-parc_tourisme %>% aggregate(N, by=list(Annee=Annee), fun=SUM)
-parc_moto %>% filter(X1 == "Total_moto") %>% ggplot(aes(x=Annee, y=N)) + geom_line()
+#parc_tourisme %>% aggregate(N, by=list(Annee=Annee), fun=SUM)
+parc_moto %>% filter(X1 == "Total_moto") %>% ggplot(aes(x=Annee, y=N)) + geom_line() +
+  labs(title="Evolution of motocycle fleet from 1990 to 2017", x="Year", y="Number") +
+  scale_y_continuous(labels = comma) +
+  geom_label_repel(data = . %>% filter(Annee == "2017"), aes(x=Annee, y=N, label = N))
 
 mec_tourisme %>% filter(Type == "Motocycles") %>% 
   ggplot() + geom_bar(aes(x=Annee,  y=N, fill=fct_reorder(Carburant,N)), position = "fill", stat="identity") +
   labs(title="Proportion of motocycles put into circulation in Switzerland per fuel type",x="Year", y="Proportion", fill="Fuel") +
-  scale_fill_brewer(palette="Paired")
+  scale_fill_brewer(palette="Paired", labels=c("Electric-diesel","Gas","No engine", "Other", "Electric-gasoline", "Diesel", "Electric", "Gasoline")) 
 ```
 
-###Observations
+Interestingly, we observe that electric motorcycles were becoming a thing from 2008 to reach 5% of total motocycle fleet in 2012 and then gradually faded away. We can conclude that there is not really a trend towards electric motocycles like the one we observed in tourism car fleet. Luc Barthassat, State Councillor in charge of mobility [said](https://www.rts.ch/play/radio/intercites/audio/les-ventes-de-motos-electriques-peinent-a-decoller-en-suisse?id=8103614&station=a9e7621504c6959e35c3ecbe7f6bed0446cdf8da) it can be partially explained by the "accessory" nature of these vehicles (standard user does between 3000 and 4000 km per year): users are looking for pleasure of use and a hobby rather than utility or ecology. Moreover, the feeling while driving is a key aspect, things like noise and vibrations matter and this aspect is lost with electric motocycles.
+
+
+## Comportements: nombre de kilomètres parcourus par type de véhicule / 
 
 ```{r echo=FALSE}
 #Data cleaning
-distance_df <- read_excel("../data/personnes_prestations.xlsx") %>% as.tibble() %>% t()
-distance <- distance_raw[-c(3,5,7,9,11,13,15,17,19,21,23,25,26,27),c(3,7,12:14,18,20:22,25,30)]
+#distance_df <- read_excel("../data/personnes_prestations.xlsx") %>% as.tibble() %>% t()
+#distance <- distance_raw[-c(3,5,7,9,11,13,15,17,19,21,23,25,26,27),c(3,7,12:14,18,20:22,25,30)]
 ```
 
-# Comportements: nombre de kilomètres parcourus par type de véhicule / 
+# Conclusion
+
+What did you learn about the data? How did you answer the questions? How can you justify your answers?
