@@ -7,27 +7,30 @@ output:
   pdf_document: default
 ---
 
-####Overview and Motivation:
+# Introduction
+## Overview and Motivation:
 
-In a few weeks the “Forum des 100” will be held at the University of Lausanne. This year we will discuss mobility in Switzerland, and in particular its future. We therefore ask ourselves whether there is a certain trend in the evolution of practices (in terms of passenger transport in particular). We both changed our behavior regarding transportation over the years for various reasons: practical, economic, health, even personal reasons (ecology etc.) or because public authorities have encouraged the use of a particular mean of transport. 
-
-Now that other means are under study or already in development (flying cars, drones, hyperloop, etc) we are curious to explore a bit the overall situation and behavioral changes of other users in recent years.
+Last week the “Forum des 100” was held at the University of Lausanne. This year one of the key subject was mobility in Switzerland, and in particular its future. We therefore ask ourselves whether there is a certain trend in the evolution of practices (in terms of passenger transport in particular). We both changed our behavior regarding transportation over the years for various reasons: practical, economic, health, even personal reasons (ecology etc.) or because public authorities have encouraged the use of a particular mean of transport. Now that other means are under study or already in development (flying cars, drones, hyperloop, etc) we are curious to explore a bit the overall situation and behavioral changes of other users in recent years.
 
 The project goal is to have a better understanding of transportation dynamics that exist in our country. We will try to identify correlations and other causal links.
 Understanding market past & current behavior helps to define needs, risks and eventually solutions for the future. We believe that having this information in mind can help decision makers. 
 
-####Related Work: 
+## Related Work: 
 
 Anything that inspired you, such as a paper, a website, or something we discussed in class.
 
 ####Initial Questions: 
 
-- What is the vehicle fleet composition in Switzerland? Are electric cars popular?
+What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?
+
 - How has the development of public transport affected the use of private vehicles over the years? To what extent? 
+- What is the link between the investments made in improving public transport networks and the fluctuations in their use? 
 
-####Data: 
 
-Source, scraping method, cleanup, etc.
+
+####Exploratory Analysis: 
+
+What visualizations did you use to look at your data in different ways? Justify the decisions you made, and show any major changes to your ideas. How did you reach these conclusions?
 
 ####Modeling: 
 
@@ -38,8 +41,8 @@ What are the different statistical methods you considered? Why did you choose a 
 What did you learn about the data? How did you answer the questions? How can you justify your answers?
 
 ###R init
-
 ```{r setup, echo = FALSE, warning = FALSE, message = FALSE}
+#loading packages
 library(knitr)
 library(tidyverse)
 library(lubridate)
@@ -52,6 +55,9 @@ library(ggrepel)
 library(readxl)
 ```
 
+####Data
+
+Source, scraping method, cleanup, etc.
 ```{r setup2, echo = FALSE, message = FALSE}
 options(digits = 3) # set precision digits
 
@@ -68,35 +74,38 @@ parc_growth <- parc_tourisme %>%
 parc_growth <- parc_growth %>% gather(`2000`, `2001`, `2002`, `2003`, `2004`, `2005`, `2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, `2013`, `2014`, `2015`, `2016`, `2017` , key = "Annee", value = "T")
 parc_growth <- parc_growth %>% mutate(Annee = as.numeric(Annee))
 
-#mec_tourism formating
-mec_tourisme <- mec_tourisme %>% gather(`X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017` , key = "Annee", value = "N")
-mec_tourisme <- mec_tourisme %>% mutate(Annee = substring(Annee,2))
+#mec_tourism formating (old R version)
+# mec_tourisme <- mec_tourisme %>% gather(`X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017` , key = "Annee", value = "N")
+# mec_tourisme <- mec_tourisme %>% mutate(Annee = substring(Annee,2))
+
+#mec_tourism formating (new R version)
+mec_tourisme <- mec_tourisme %>% gather(`2005`, `2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, `2013`, `2014`, `2015`, `2016`, `2017` , key = "Annee", value = "N")
 mec_tourisme <- mec_tourisme %>% mutate(Annee = as.numeric(Annee))
+
 
 #parc_tourism formating
 parc_tourisme <- parc_tourisme %>% gather(`X2000`, `X2001`, `X2002`, `X2003`, `X2004`, `X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017`, key = "Annee", value = "N")
 parc_tourisme <- parc_tourisme %>% mutate(Annee = substring(Annee,2))
 parc_tourisme <- parc_tourisme %>% mutate(Annee = as.numeric(Annee))
+# colnames(parc_tourisme)[3] <- "Number"
 
 #parc_moto formating
 parc_moto <- parc_moto %>% gather(`1990`, `1991`, `1992`, `1993`, `1994`, `1995`, `1996`, `1997`, `1998`, `1999`, `2000`, `2001`, `2002`, `2003`, `2004`, `2005`, `2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, `2013`, `2014`, `2015`, `2016`, `2017` , key = "Annee", value = "N")
 parc_moto <- parc_moto %>% mutate(Annee = as.numeric(Annee))
 ```
 
-####Exploratory Analysis: 
+## Exploratory Analysis: 
 
-To begin with, we looked passenger cars in Switzerland and particularly their fuel: we see on the graph below that electric vehicles are gradually making their way onto Swiss roads. Even if the electric proportion in the total number of vehicles put into service remains relatively low, we can see from the following graph that there is indeed a trend towards this new propulsion.
+To begin with, we looked passenger cars in Switzerland and particularly their fuel type. We see on the graph below that electric vehicles are gradually making their way onto Swiss roads. Even if the electric proportion in the total number of vehicles put into service remains relatively low, we can see from the following graph that there is indeed a trend towards this new mean of propulsion. The data are from the `r mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% summarise(sum(N,na.rm = TRUE)) %>% kable(col.names = "Total passenger cars put into circulation between 2005 and 2017.")` cars  put into circulation between 2005 and 2017.
 
 ```{r echo = FALSE}
 mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% 
   ggplot() + geom_bar(aes(x=Annee,  y=N, fill=fct_reorder(Carburant,N)), position = "fill", stat="identity") +
-  labs(title="Proportion of passenger cars put into circulation in Switzerland per fuel type",x="Year", y="Proportion", fill="Fuel") +
-  scale_fill_brewer(palette="Paired")
-
-mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% summarise(sum(N,na.rm = TRUE)) %>% kable(col.names = "Total passenger cars put into circulation between 2005 and 2017.")
+  labs(title="Proportion of passenger cars put into circulation in Switzerland per fuel type",x="Annee", y="Proportion", fill="Carburant")+
+  scale_fill_brewer(palette="Paired",labels=c("No engine","Electric-diesel","Other", "Electric","Gas","Electric-gasoline","Diesel", "Gasoline"))
 ```
 
-Indeed while the growth rates of diesel and petrol cars have stagnated for several years, the growth rate of electric vehicles is relatively high since 2009 and demonstrates a booming market. Nevertheless, it should be noted that this very high variation (+60%) between 2012 and 2015 has tended to run out of steam since then for an increase of "only" 36% in 2017.
+While the growth rate of diesel and petrol cars have stagnated for several years, the growth rate of electric vehicles is relatively high since 2009 and demonstrates a booming market. Nevertheless, it should be noted that this very high variation (+60%) between 2012 and 2015 has tended to run out of steam since then for an increase of "only" 36% in 2017.
 
 ```{r echo = FALSE, warning = FALSE}
 #Let's remove Inf data
@@ -104,23 +113,22 @@ parc_growth %>% filter(Carburant != "Autres")  %>%
   ggplot(aes(x=Annee, y=T, color=Carburant, na.rm = TRUE)) + 
   geom_line() + scale_y_continuous(labels = scales::percent) + 
   labs(title="Passenger car fleet Growth per year and fuel type", x="Year", y="Growth Rate") + 
-  geom_label_repel(data = . %>% filter(Annee == "2017") %>% mutate(T = round(T,2)), aes(x=Annee, y=T, label = T))
+  geom_label_repel(data = . %>% filter(Annee == "2017") %>% mutate(T = round(T,2)), aes(x=Annee, y=T, label = T))+
+  scale_color_discrete(labels=c("Diesel","Electric","Gasoline"))
 ```
 
-Now let's take a look at the passenger transport vehicles (light automobiles, heavy automobiles, buses, minibuses) put into circulation in Switzerland for the last decade. It seems that 99% of the 50'000 vehicles put into circulation are diesel-powered. (?)
+Now let's take a look at the passenger transport vehicles (light automobiles, heavy automobiles, buses, minibuses) put into circulation in Switzerland for the last decade. It seems that 99% of the 50'000 vehicles put into circulation are diesel-powered. The data are from the `r mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% summarise(sum(N,na.rm = TRUE)) %>% kable(col.names = "Total passenger transport vehicles put into circulation between 2005 and 2017.")` cars  put into circulation between 2005 and 2017.
 
 ```{r echo = FALSE}
 mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% 
   ggplot() + geom_bar(aes(x=Annee,  y=N, fill=fct_reorder(Carburant,N)), position = "fill", stat="identity") +
   labs(title="Proportion of passenger transport vehicles put into circulation in Switzerland per fuel type",x="Year", y="Proportion", fill="Fuel") +
-  scale_fill_brewer(palette="Paired")
-
-mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% summarise(sum(N,na.rm = TRUE)) %>% kable(col.names = "Total passenger transport vehicles put into circulation between 2005 and 2017.")
+  scale_fill_brewer(palette="Paired",labels=c("Electric-gasoline","No engine","Other", "Electric","Gas","Diesel-electric", "Gasoline","Diesel"))
 ```
 
 Finally we will take a look at motorcycles :
 
-``` {r echo = FALSE}
+```{r echo = FALSE} 
 parc_tourisme %>% aggregate(N, by=list(Annee=Annee), fun=SUM)
 parc_moto %>% filter(X1 == "Total_moto") %>% ggplot(aes(x=Annee, y=N)) + geom_line()
 
@@ -129,3 +137,13 @@ mec_tourisme %>% filter(Type == "Motocycles") %>%
   labs(title="Proportion of motocycles put into circulation in Switzerland per fuel type",x="Year", y="Proportion", fill="Fuel") +
   scale_fill_brewer(palette="Paired")
 ```
+
+###Observations
+
+```{r echo=FALSE}
+#Data cleaning
+distance_df <- read_excel("../data/personnes_prestations.xlsx") %>% as.tibble() %>% t()
+distance <- distance_raw[-c(3,5,7,9,11,13,15,17,19,21,23,25,26,27),c(3,7,12:14,18,20:22,25,30)]
+```
+
+# Comportements: nombre de kilomètres parcourus par type de véhicule / 
