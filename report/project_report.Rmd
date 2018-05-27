@@ -1,6 +1,7 @@
 ---
-title: "Project Report"
-author: "Bron, Luca and Lapierre, Hadrien"
+title: "Transport trends and development in Switzerland."
+subtitle: "Project Report"
+author: "Luca Bron & Hadrien Lapierre"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
@@ -37,10 +38,11 @@ Understanding market past & current behavior helps to define needs, risks and ev
 
 ## Related Work
 
-Anything that inspired you, such as a paper, a website, or something we discussed in class.
- - All strategic information related to [soft mobility (fr)](https://www.astra.admin.ch/astra/fr/home/themes/mobilite-douce/dossiers-strategiques-pour-la-mobilite-douce.html)
- - Useful information on road vehicles in Switzerland [on OFS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.html)
- - Motorization rate in Switzerland per year per canton [on OFS website](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.assetdetail.4402736.html)
+Anything that inspired you, such as a paper, a website, or something we discussed in class.  
+
+* All strategic information related to [soft mobility (fr)](https://www.astra.admin.ch/astra/fr/home/themes/mobilite-douce/dossiers-strategiques-pour-la-mobilite-douce.html)
+* Useful information on road vehicles in Switzerland [on OFS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.html)
+* Motorization rate in Switzerland per year per canton [on OFS website](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.assetdetail.4402736.html)  
 
 ## Initial Questions
 
@@ -66,7 +68,7 @@ We used data from the Office Fédéral de la Statistique (OFS) mainly :
 
 Source, scraping method, cleanup, etc.
 
-```{r setup2, echo = FALSE, message=FALSE}
+```{r setup2, echo = FALSE, message=FALSE, warning=FALSE}
 options(digits = 3) # set precision digits
 
 #Init import
@@ -146,7 +148,7 @@ mec_transport %>% filter(X1 != "total") %>%
 ```
 
 The data are from the `r mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% summarise(sum(N,na.rm = TRUE))` automobiles put into circulation between 2005 and 2017.  
-It seems that 98% of the 50'000 vehicles put into circulation are diesel-powered in 2017.
+It seems that 98% of the 50'000 vehicles put into circulation are diesel-powered in 2017. Numbers in white representent diesel units per year.
 
 ```{r echo = FALSE}
 mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% 
@@ -185,15 +187,167 @@ mec_tourisme %>% filter(Type == "Motocycles") %>%
 
 Interestingly, we observe that electric motorcycles were becoming a thing from 2008 to reach 5% of total motocycle fleet in 2012 and then gradually faded away. We can conclude that there is not really a trend towards electric motocycles like the one we observed in tourism car fleet. Luc Barthassat, State Councillor in charge of mobility [said](https://www.rts.ch/play/radio/intercites/audio/les-ventes-de-motos-electriques-peinent-a-decoller-en-suisse?id=8103614&station=a9e7621504c6959e35c3ecbe7f6bed0446cdf8da) it can be partially explained by the "accessory" nature of these vehicles (standard user does between 3000 and 4000 km per year): users are looking for pleasure of use and a hobby rather than utility or ecology. Moreover, the feeling while driving is a key aspect, things like noise and vibrations matter and this aspect is lost with electric motocycles.
 
-To conclude, it appears Switzerland has a lot to do in terms of ecological propulsion, particularly in the passenger transport category where the vehicle fleet renewal is still largely dominated by fossil fuels. 
+To conclude, it appears Switzerland has a lot to do in terms of ecological propulsion, particularly in the passenger transport category where the vehicle fleet renewal is still largely dominated by fossil fuels.  
 
-## Comportements: nombre de kilomètres parcourus par type de véhicule / 
+## Difference between types of vehicules  
+
+Now that we have done some exploratory data analysis on the consumer choice of car engine, we will now look at the tradeoff between taking the car or other means of transportation.  
 
 ```{r echo=FALSE}
-#Data cleaning
-#distance_df <- read_excel("../data/personnes_prestations.xlsx") %>% as.tibble() %>% t()
-#distance <- distance_raw[-c(3,5,7,9,11,13,15,17,19,21,23,25,26,27),c(3,7,12:14,18,20:22,25,30)]
+#Data preparation kilometer-vehicule
+kil_vehic <- read_excel("../data/personnes_prestations.xlsx")%>% as.tibble()
+kil_vehic <- kil_vehic %>% gather("Train", "Tram","Trolleybus","Autobus","Private_car","Private_bus","Motorbike","Moped", key = "Type", value = "Vehic_km") %>% mutate(Year = as.numeric(Year), Vehic_km = as.numeric(Vehic_km))
+kil_vehic <- kil_vehic %>% filter(Year!=2017)
+
+#Data preparation kilometer-person
+kil_pers <- read_excel("../data/personnes_prestations2.xls")%>% as.tibble()
+kil_pers <- kil_pers %>% gather("Train", "Tram","Trolleybus","Autobus","Private_car","Private_bus","Motorbike","Moped", key = "Type", value = "Pers_km") %>%
+mutate(Year = as.numeric(Year), Pers_km = as.numeric(Pers_km))
+kil_pers <- kil_pers %>% filter(Year!=2017)
+
+kilometers <- kil_vehic %>% full_join(kil_pers) 
 ```
+
+## Infrastructure and vehicule-kilometer
+
+For this first analysis, we observe the amount of vehicule-kilometer which corresponds in billion to the number of kilometers traveled by each vehicule type.  
+This statistic by itself is not the most interesting. It's like comparing apple to oranges since a car can contain one to six people whereas a train contains hundreds. The first graph show that private car is the main transport by far, and this needs to be taken with a grain of salt.  
+However, this statistic is interesting when used to observe trends within each type. It is a good proxy of how the infrastructure and its ecological impact grow.  
+
+```{r echo = FALSE}
+kilometers %>% 
+  ggplot() +
+    geom_area(aes(x=Year,  y=Vehic_km, fill=fct_reorder(Type,Vehic_km))) +
+    labs(title="Number of kilometers per vehicule",x="Year", y="Proportion", fill="Type")+
+    scale_fill_brewer(palette="Paired")
+```
+
+We built a model to see the increase of each transport type.
+
+```{r}
+by_transport <- kilometers %>% group_by(Type) %>% nest
+#nest by transport type
+transport_model1 <- function(df) {lm(Vehic_km ~ Year, data=df)}
+#creates the models fitting functions
+
+by_transport1 <- by_transport %>% 
+  mutate(model = purrr::map(data, transport_model1))
+#create a new column for the nested models so that the related objects are stored together
+
+by_transport1 <- by_transport1 %>% 
+  mutate(predictions = purrr::map2(data, model, add_predictions), resids = purrr::map2(data, model, add_residuals))
+#create a new column for the nested predictions and residuals of the model
+
+by_transport3 <- by_transport1 %>% 
+  mutate(tidy = purrr::map(model, broom::tidy)) %>% 
+  unnest(tidy, .drop = TRUE) %>%
+  filter(term=="Year")
+#unnesting the data. Retrieving the coefficients and their statistics
+
+by_transport3 %>% 
+  select(-term,-statistic,-p.value) %>%
+  kable(caption="Yearly increase", align='c',digits=3, 
+  col.names = c("Type","Prediction", "STDE"))
+##showing the coefficients and their statistics
+
+by_transport1 <- unnest(by_transport1,predictions) %>% full_join(unnest(by_transport1,resids)) %>% mutate(prop_resid=resid/pred)
+##recreate the two tibble and adding a column with proportional residuals
+
+by_transport1 <- by_transport1 %>% left_join(by_transport3) %>% select(-term,-std.error,-statistic,-p.value) %>% mutate(index=map(pred,pred[1]))
+##merge the two tables
+
+# by_transport1 %>%
+#   ggplot(aes(x=Year, y=growth, color=Type))+
+#     geom_line()
+#     labs(title="Passenger car fleet Growth per year and fuel type", x="Year", y="Growth Rate") + 
+#     geom_label_repel(data = . %>% filter(Annee == "2017") %>% mutate(T = round(T,2)), aes(x=Annee, y=T, label = T))+
+#     scale_color_discrete(labels=c("Diesel","Electric","Gasoline"))
+  
+
+by_transport1 %>% 
+  ggplot(aes(Type, prop_resid))+
+  geom_boxplot()+
+  labs(title="Proportional residuals per type of transport", x="Year",y="Residuals")
+#Generates graph of residuals per type of car
+
+by_transport1 %>%
+  ggplot(aes(Year, prop_resid, group=Type)) +
+    geom_line()+
+    facet_wrap(~Type,scales = "free_y")+
+    labs(y="Residuals over prediction")
+#plot the residuals variance
+```
+
+The first table shows the predicition of the yearly increase for each transportation type. The raw data is the not the most interesting and that's why the second table was build to see the flat increase year by year as well as the percentage increase compared to 2005. This last result was then plotted to compare they different transport types.  
+Looking at the residuals, it was first needed to be able to compare them between classes. Since Private_car was so big compared to the other, we create a measure of the residuals proportional to their predictors. Looking at the output, we see that the growth is much more stable for cars and trains than for trams. Lastly, a graph was made to see if there's a correlation of the residuals between types of tranportation. If we see a pattern of residuals through all the graphs, that would mean that there were some similare fluctuations in different types at the same time. However, we do not observe this here.  
+
+## Behaviour and person-kilometer
+
+Similarly from the statistic that was used previously, here the analysis is on person-kilometer which is in billion the nummber of kilometers traveled by people for each vehicule type. Here, the statistic is much more understandable and that's the one that'd be use in the rest of this section.  
+
+This first graph shows that the people in Switzerland always travel more.  
+
+```{r echo=FALSE}
+kilometers %>% group_by(Year) %>% summarize(Pers_km=sum(Pers_km)) %>%
+  ggplot(aes(x=Year, y=(Pers_km)))+
+    geom_line()+
+    labs(title="Increase of kilometers per person", x="Year",y="Kilometers per person")
+```
+
+From this second graph, we can see that private car dominates. Almost 75% of the kilometers travelled in Switzerland are in a private car.  
+
+```{r echo = FALSE}
+kilometers %>% 
+  ggplot() + geom_bar(aes(x=Year,  y=Pers_km, fill=fct_reorder(Type,Pers_km)), position = "fill", stat="identity") +
+ labs(title="Number of kilometers per person",x="Year", y="Proportion", fill="Type")+
+  scale_fill_brewer(palette="Paired")
+```
+
+Again, we build a model to see the increase of each transport type.
+
+```{r echo=FALSE}
+transport_model2 <- function(df) {lm(Pers_km ~ Year, data=df)}
+#creates the models fitting functions
+
+by_transport2 <- by_transport %>% 
+  mutate(model = purrr::map(data, transport_model2))
+#create a new column for the nested models so that the related objects are stored together
+
+by_transport2 <- by_transport2 %>% 
+  mutate(predictions = purrr::map2(data, model, add_predictions), resids = purrr::map2(data, model, add_residuals))
+#create a new column for the nested predictions and residuals of the model
+
+by_transport4 <- by_transport2 %>% 
+  mutate(tidy = purrr::map(model, broom::tidy)) %>% 
+  unnest(tidy, .drop = TRUE) %>%
+  filter(term=="Year")
+#unnesting the data. Retrieving the coefficients and their statistics
+
+by_transport4 %>% 
+  select(-statistic,-p.value,-term) %>%
+  kable(caption="Yearly increase", align='c',digits=3, 
+  col.names = c("Type","Prediction", "STDE"))
+##retriewing the coefficients and their statistics
+
+by_transport2 <- unnest(by_transport2,predictions) %>% full_join(unnest(by_transport2,resids)) %>% mutate(prop_resid=resid/pred)
+##recreate the two tibble and adding a column with proportional residuals
+
+by_transport2 %>% 
+  ggplot(aes(Type, prop_resid))+
+  geom_boxplot()+
+  labs(title="Proportional residuals per type of transport", x="Year",y="Residuals")
+#Generates graph of residuals per type of car
+
+by_transport2 %>%
+  ggplot(aes(Year, prop_resid, group=Type)) +
+    geom_line()+
+    facet_wrap(~Type,scales = "free_y")+
+    labs(y="Residuals over prediction")
+#plot the residuals variance
+```
+
+The results are similar to what we had for the vehicule-kilometer model.  
+The one meaningful difference that is observable is in the graph of the relative growth of the different types.
 
 # Conclusion
 
