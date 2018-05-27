@@ -36,7 +36,8 @@ library(scales)
 We used data from the Office Fédéral de la Statistique (OFS) mainly : 
 
 - Road vehicle fleet by vehicle groups and vehicle types from 1990 to 2017 (retrieved from [OFS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.assetdetail.4382325.html)). Cleaned up on excel
-- Road vehicles put into circulation by vehicle groups and kinds from 1990 to 2017 (retrieve from [ODS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/routiers-mises-circulation.assetdetail.4382276.html)). Cleanup on excel
+- Road vehicles put into circulation by vehicle groups and kinds from 1990 to 2017 (retrieve from [OFS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/routiers-mises-circulation.assetdetail.4382276.html)). Cleanup on excel
+- Transport of people: kilometric allowance and vehicules movement 2005 to 2016 (retrieve from [OFS website (fr)](https://www.bfs.admin.ch/asset/fr/je-f-11.04.01.01) and [ODS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/transport-personnes/prestations.assetdetail.4083125.html). Cleanup on excel
 
 ```{r setup2, echo = FALSE, message=FALSE, warning=FALSE}
 options(digits = 3) # set precision digits
@@ -148,7 +149,7 @@ mec_tourisme %>% filter(Type == "Motocycles") %>%
 
 ## Part Two: Difference between types of vehicules  
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE}
 #Data preparation kilometer-vehicule
 kil_vehic <- read_excel("../data/personnes_prestations.xlsx")%>% as.tibble()
 kil_vehic <- kil_vehic %>% gather("Train", "Tram","Trolleybus","Autobus","Private_car","Private_bus","Motorbike","Moped", key = "Type", value = "Vehic_km") %>% mutate(Year = as.numeric(Year), Vehic_km = as.numeric(Vehic_km))
@@ -169,7 +170,7 @@ Infrastructure and vehicule-kilometer
 kilometers %>% 
   ggplot() +
     geom_area(aes(x=Year,  y=Vehic_km, fill=fct_reorder(Type,Vehic_km))) +
-    labs(title="Number of kilometers per vehicule",x="Year", y="Proportion", fill="Type")+
+    labs(title="Amount of vehicule-kilometers", subtitle="in billion",x="Year", y="Vehicule-kilometers", fill="Type")+
     scale_fill_brewer(palette="Paired")
 ```
 
@@ -204,16 +205,20 @@ by_transport3 %>%
 by_transport1 <- unnest(by_transport1,predictions) %>% full_join(unnest(by_transport1,resids)) %>% mutate(prop_resid=resid/pred)
 ##recreate the two tibble and adding a column with proportional residuals
 
-by_transport1 <- by_transport1 %>% left_join(by_transport3) %>% select(-term,-std.error,-statistic,-p.value) %>% mutate(index=map(pred,pred[1]))
+by_transport1 <- by_transport1 %>% left_join(by_transport3) %>% select(-term,-std.error,-statistic,-p.value)
 ##merge the two tables
 
-# by_transport1 %>%
-#   ggplot(aes(x=Year, y=growth, color=Type))+
-#     geom_line()
-#     labs(title="Passenger car fleet Growth per year and fuel type", x="Year", y="Growth Rate") + 
-#     geom_label_repel(data = . %>% filter(Annee == "2017") %>% mutate(T = round(T,2)), aes(x=Annee, y=T, label = T))+
-#     scale_color_discrete(labels=c("Diesel","Electric","Gasoline"))
-  
+mutateRbind <- function(left, right) {
+    right <- mutate(right, index=map_dbl(right$Vehic_km, function(x) x/right$Vehic_km[1]))
+    left <- rbind(left, right)
+    return(left)
+}
+
+grpTables1 <- by_transport1 %>% split(by_transport1$Type)
+
+emptyTable1 <-  data.frame(matrix(nrow = 0, ncol = 10))
+
+by_transport1 <- reduce(grpTables1, mutateRbind, .init=emptyTable1)
 
 by_transport1 %>% 
   ggplot(aes(Type, prop_resid))+
@@ -229,23 +234,30 @@ by_transport1 %>%
 #plot the residuals variance
 ```
 
+```{r echo=FALSE}
+by_transport1 %>%
+  ggplot(aes(x=Year, y=index, color=Type))+
+    geom_line()+ scale_y_continuous(labels = scales::percent)+
+    labs(title="Index for each type of transport", subtitle="2005 = 100%", x="Year", y="Growth Rate")
+```
 ---
 
 People in Switzerland always travel more.  
 
 ```{r echo=FALSE}
-kilometers %>% group_by(Year) %>% summarize(Pers_km=sum(Pers_km)) %>%
+kilometers %>% group_by(Year) %>% summarize(Pers_km=round(sum(Pers_km))) %>%
   ggplot(aes(x=Year, y=(Pers_km)))+
     geom_line()+
-    labs(title="Increase of kilometers per person", x="Year",y="Kilometers per person")
+    labs(title="Increase of person-kilometers", subtitle="in billion", x="Year",y="Person-kilometers") +
+    geom_label_repel(data = . %>% filter(Year == "2016"), aes(x=Year, y=Pers_km, label = Pers_km))
 ```
 
 ---
 
 ```{r echo = FALSE}
 kilometers %>% 
-  ggplot() + geom_bar(aes(x=Year,  y=Pers_km, fill=fct_reorder(Type,Pers_km)), position = "fill", stat="identity") +
- labs(title="Number of kilometers per person",x="Year", y="Proportion", fill="Type")+
+  ggplot() + geom_area(aes(x=Year,  y=Pers_km, fill=fct_reorder(Type,Pers_km))) +
+ labs(title="Amount of person-kilometers", subtitle="in billion",x="Year", y="Person-kilometers", fill="Type")+
   scale_fill_brewer(palette="Paired")
 ```
 
@@ -278,6 +290,21 @@ by_transport4 %>%
 by_transport2 <- unnest(by_transport2,predictions) %>% full_join(unnest(by_transport2,resids)) %>% mutate(prop_resid=resid/pred)
 ##recreate the two tibble and adding a column with proportional residuals
 
+by_transport2 <- by_transport2 %>% left_join(by_transport4) %>% select(-term,-std.error,-statistic,-p.value)
+##merge the two tables
+
+mutateRbind <- function(left, right) {
+    right <- mutate(right, index=map_dbl(right$Pers_km, function(x) x/right$Pers_km[1]))
+    left <- rbind(left, right)
+    return(left)
+}
+
+grpTables2 <- by_transport2 %>% split(by_transport2$Type)
+
+emptyTable2 <-  data.frame(matrix(nrow = 0, ncol = 10))
+
+by_transport2 <- reduce(grpTables2, mutateRbind, .init=emptyTable2)
+
 by_transport2 %>% 
   ggplot(aes(Type, prop_resid))+
   geom_boxplot()+
@@ -292,6 +319,12 @@ by_transport2 %>%
 #plot the residuals variance
 ```
 
+```{r echo=FALSE}
+by_transport2 %>%
+  ggplot(aes(x=Year, y=index, color=Type))+
+    geom_line()+ scale_y_continuous(labels = scales::percent)+
+    labs(title="Index each type of transport", subtitle="2005 = 100%", x="Year", y="Growth Rate")
+```
 # Conclusion
 
 # Thanks! Questions?

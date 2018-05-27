@@ -6,12 +6,17 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     number_sections: true
     theme: united
     highlight: tango
   pdf_document: default
 ---
+<style>
+body {
+text-align: justify;
+font-family: "Arial";}
+</style>
 
 ```{r setup, echo = FALSE, warning = FALSE, message = FALSE}
 #loading packages
@@ -64,9 +69,8 @@ We used data from the Office Fédéral de la Statistique (OFS) mainly :
 
 - Road vehicle fleet by vehicle groups and vehicle types from 1990 to 2017 (retrieved from [OFS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.assetdetail.4382325.html)). Cleaned up on excel
 - Road vehicles put into circulation by vehicle groups and kinds from 1990 to 2017 (retrieve from [ODS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/routiers-mises-circulation.assetdetail.4382276.html)). Cleanup on excel
+- Transport of people: kilometric allowance and vehicules movement 2005 to 2016 (retrieve from [ODS website (fr)](https://www.bfs.admin.ch/asset/fr/je-f-11.04.01.01) and [ODS website (fr)](https://www.bfs.admin.ch/asset/fr/je-f-11.04.01.01)https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/transport-personnes/prestations.assetdetail.4083125.html). Cleanup on excel
 
-
-Source, scraping method, cleanup, etc.
 
 ```{r setup2, echo = FALSE, message=FALSE, warning=FALSE}
 options(digits = 3) # set precision digits
@@ -192,7 +196,7 @@ Interestingly, we observe that electric motorcycles were becoming a thing from 2
 
 Now that we have done some exploratory data analysis on the consumer choice of car engine, we will now look at the tradeoff between taking the car or other means of transportation.  
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE}
 #Data preparation kilometer-vehicule
 kil_vehic <- read_excel("../data/personnes_prestations.xlsx")%>% as.tibble()
 kil_vehic <- kil_vehic %>% gather("Train", "Tram","Trolleybus","Autobus","Private_car","Private_bus","Motorbike","Moped", key = "Type", value = "Vehic_km") %>% mutate(Year = as.numeric(Year), Vehic_km = as.numeric(Vehic_km))
@@ -210,18 +214,18 @@ kilometers <- kil_vehic %>% full_join(kil_pers)
 ### Infrastructure and vehicule-kilometer
 
 For this first analysis, we observe the amount of vehicule-kilometer which corresponds in billion to the number of kilometers traveled by each vehicule type.  
-This statistic by itself is not the most interesting. It's like comparing apple to oranges since a car can contain one to six people whereas a train contains hundreds. The first graph show that private car is the main transport by far, and this needs to be taken with a grain of salt.  
-However, this statistic is interesting when used to observe trends within each type. It is a good proxy of how the infrastructure and its ecological impact grow.  
+This statistic by itself is not the most interesting. It's like comparing apple to oranges since a car can contain one to six people whereas a train contains hundreds having the distance travelled by a vehicle does not tell much about the user's behaviour. Here, the first graph show that private car is the main transport by far.
+However, this statistic is interesting when used to observe trends within each type. It is a good proxy of how the infrastructure and its ecological impact grow. We see that for private car, there's a need for larger infrastructure. 
 
 ```{r echo = FALSE}
 kilometers %>% 
   ggplot() +
     geom_area(aes(x=Year,  y=Vehic_km, fill=fct_reorder(Type,Vehic_km))) +
-    labs(title="Number of kilometers per vehicule",x="Year", y="Proportion", fill="Type")+
+    labs(title="Amount of vehicule-kilometers", subtitle="in billion",x="Year", y="Vehicule-kilometers", fill="Type")+
     scale_fill_brewer(palette="Paired")
 ```
 
-We built a model to see the increase of each transport type.
+Because of the prevalence of private car, it is hard to see how the other variables do. We thus build a model that use a linear model to generate an estimate of the increase of each transport type per year. 
 
 ```{r}
 by_transport <- kilometers %>% group_by(Type) %>% nest
@@ -242,7 +246,16 @@ by_transport3 <- by_transport1 %>%
   unnest(tidy, .drop = TRUE) %>%
   filter(term=="Year")
 #unnesting the data. Retrieving the coefficients and their statistics
+```
 
+Now we can do some analysis.  
+
+The first table shows the predicition of the yearly increase for each transportation type. The raw data is the not the most interesting and we'll talk about relative data further down the line.
+
+Looking at the residuals, it was first needed to be able to compare them between classes. Since Private_car was so big compared to the other, we create a measure of the residuals proportional to their predictors. Looking at the output, we see that the growth is much more stable for cars and trains than for trams.  
+Lastly, a graph was made to see if there's a correlation of the residuals between types of tranportation. If we see a pattern of residuals through all the graphs, that would mean that there were some similare fluctuations in different types at the same time. However, we do not observe this here.  
+
+```{r echo=FALSE, message=FALSE}
 by_transport3 %>% 
   select(-term,-statistic,-p.value) %>%
   kable(caption="Yearly increase", align='c',digits=3, 
@@ -252,16 +265,20 @@ by_transport3 %>%
 by_transport1 <- unnest(by_transport1,predictions) %>% full_join(unnest(by_transport1,resids)) %>% mutate(prop_resid=resid/pred)
 ##recreate the two tibble and adding a column with proportional residuals
 
-by_transport1 <- by_transport1 %>% left_join(by_transport3) %>% select(-term,-std.error,-statistic,-p.value) %>% mutate(index=map(pred,pred[1]))
+by_transport1 <- by_transport1 %>% left_join(by_transport3) %>% select(-term,-std.error,-statistic,-p.value)
 ##merge the two tables
 
-# by_transport1 %>%
-#   ggplot(aes(x=Year, y=growth, color=Type))+
-#     geom_line()
-#     labs(title="Passenger car fleet Growth per year and fuel type", x="Year", y="Growth Rate") + 
-#     geom_label_repel(data = . %>% filter(Annee == "2017") %>% mutate(T = round(T,2)), aes(x=Annee, y=T, label = T))+
-#     scale_color_discrete(labels=c("Diesel","Electric","Gasoline"))
-  
+mutateRbind <- function(left, right) {
+    right <- mutate(right, index=map_dbl(right$Vehic_km, function(x) x/right$Vehic_km[1]))
+    left <- rbind(left, right)
+    return(left)
+}
+
+grpTables1 <- by_transport1 %>% split(by_transport1$Type)
+
+emptyTable1 <-  data.frame(matrix(nrow = 0, ncol = 10))
+
+by_transport1 <- reduce(grpTables1, mutateRbind, .init=emptyTable1)
 
 by_transport1 %>% 
   ggplot(aes(Type, prop_resid))+
@@ -277,34 +294,45 @@ by_transport1 %>%
 #plot the residuals variance
 ```
 
-The first table shows the predicition of the yearly increase for each transportation type. The raw data is the not the most interesting and that's why the second table was build to see the flat increase year by year as well as the percentage increase compared to 2005. This last result was then plotted to compare they different transport types.  
-Looking at the residuals, it was first needed to be able to compare them between classes. Since Private_car was so big compared to the other, we create a measure of the residuals proportional to their predictors. Looking at the output, we see that the growth is much more stable for cars and trains than for trams. Lastly, a graph was made to see if there's a correlation of the residuals between types of tranportation. If we see a pattern of residuals through all the graphs, that would mean that there were some similare fluctuations in different types at the same time. However, we do not observe this here.  
+This graph is what we touched upon previously. I shows how much the growth of different types of transport was compared to the other. All variables are set to 100% for year 2005 and we see their relative evolution.  
+We can see that train has gained 20% in 11 year while Trolleybus stagnated.
+
+```{r echo=FALSE}
+by_transport1 %>%
+  ggplot(aes(x=Year, y=index, color=Type))+
+    geom_line()+ scale_y_continuous(labels = scales::percent)+
+    labs(title="Index for each type of transport", subtitle="2005 = 100%", x="Year", y="Growth Rate")
+```
+
+Overall, we see that there's a need for stronger transport infrastructure in Switzerland. For most of the transportation types, we had an increase of vehicule-kilometers. The good news it that the types that see the strong increase are the most eco-friendly one like train and autobus.
 
 ### Behaviour and person-kilometer
 
-Similarly from the statistic that was used previously, here the analysis is on person-kilometer which is in billion the nummber of kilometers traveled by people for each vehicule type. Here, the statistic is much more understandable and that's the one that'd be use in the rest of this section.  
+Similarly from the statistic that was used previously, here the analysis is on person-kilometer which is in billion the number of kilometers traveled by people for each vehicule type. Here, the statistic is much more understandable. Instead of having the distance travelled by vehicules, it's by person. That means no more guess of how many people you can fit in each vehicule type.
 
-This first graph shows that the people in Switzerland always travel more.  
+First, we wanted to know if there's a general trend of how much people travel.  
+This first graph shows that the people in Switzerland always travel more. In 2016, the number reaches 107'888 billion of person-kilometer. Even though the increase in population size might be for something, it is still a large increase.
 
 ```{r echo=FALSE}
-kilometers %>% group_by(Year) %>% summarize(Pers_km=sum(Pers_km)) %>%
+kilometers %>% group_by(Year) %>% summarize(Pers_km=round(sum(Pers_km))) %>%
   ggplot(aes(x=Year, y=(Pers_km)))+
     geom_line()+
-    labs(title="Increase of kilometers per person", x="Year",y="Kilometers per person")
+    labs(title="Increase of person-kilometers", subtitle="in billion", x="Year",y="Person-kilometers") +
+    geom_label_repel(data = . %>% filter(Year == "2016"), aes(x=Year, y=Pers_km, label = Pers_km))
 ```
 
-From this second graph, we can see that private car dominates. Almost 75% of the kilometers travelled in Switzerland are in a private car.  
+From this second graph, we can see that private car dominates. Almost 75% of the kilometers travelled in Switzerland are in a private car. Second is train which also represent a good chunk of the total. 
 
 ```{r echo = FALSE}
 kilometers %>% 
-  ggplot() + geom_bar(aes(x=Year,  y=Pers_km, fill=fct_reorder(Type,Pers_km)), position = "fill", stat="identity") +
- labs(title="Number of kilometers per person",x="Year", y="Proportion", fill="Type")+
+  ggplot() + geom_area(aes(x=Year,  y=Pers_km, fill=fct_reorder(Type,Pers_km))) +
+ labs(title="Amount of person-kilometers", subtitle="in billion",x="Year", y="Person-kilometers", fill="Type")+
   scale_fill_brewer(palette="Paired")
 ```
 
 Again, we build a model to see the increase of each transport type.
 
-```{r echo=FALSE}
+```{r}
 transport_model2 <- function(df) {lm(Pers_km ~ Year, data=df)}
 #creates the models fitting functions
 
@@ -321,7 +349,13 @@ by_transport4 <- by_transport2 %>%
   unnest(tidy, .drop = TRUE) %>%
   filter(term=="Year")
 #unnesting the data. Retrieving the coefficients and their statistics
+```
 
+The first table again shows the predicition of the yearly increase for each transportation type. This time we see that the relative prediction of train to private cars is important.
+
+Looking at the residuals, we arrive to the same conclusions as before. Some categories fluctuate more than others, but overal there's no correlation.
+
+```{r echo=FALSE}
 by_transport4 %>% 
   select(-statistic,-p.value,-term) %>%
   kable(caption="Yearly increase", align='c',digits=3, 
@@ -330,6 +364,21 @@ by_transport4 %>%
 
 by_transport2 <- unnest(by_transport2,predictions) %>% full_join(unnest(by_transport2,resids)) %>% mutate(prop_resid=resid/pred)
 ##recreate the two tibble and adding a column with proportional residuals
+
+by_transport2 <- by_transport2 %>% left_join(by_transport4) %>% select(-term,-std.error,-statistic,-p.value)
+##merge the two tables
+
+mutateRbind <- function(left, right) {
+    right <- mutate(right, index=map_dbl(right$Pers_km, function(x) x/right$Pers_km[1]))
+    left <- rbind(left, right)
+    return(left)
+}
+
+grpTables2 <- by_transport2 %>% split(by_transport2$Type)
+
+emptyTable2 <-  data.frame(matrix(nrow = 0, ncol = 10))
+
+by_transport2 <- reduce(grpTables2, mutateRbind, .init=emptyTable2)
 
 by_transport2 %>% 
   ggplot(aes(Type, prop_resid))+
@@ -346,10 +395,25 @@ by_transport2 %>%
 ```
 
 The results are similar to what we had for the vehicule-kilometer model.  
-The one meaningful difference that is observable is in the graph of the relative growth of the different types.
+The one meaningful difference that is observable is in the graph of the relative growth of the different types. This graph works the same as the one before but this time with a meaningful information of customer behaviour. All variables are set to 100 for year 2005 and we see their relative evolution.  
+We can see that train has gained 30% compared to the 20% of vehicule-kilometers in 11 year which means that the train are only a little bit more full than in 2005. Notable trend is that tram is comming strong even though it wasn't particularly important for the vehicule-kilometers graph. Maybe a better management of the network led to more people using tram for a relatively lower number of trams put into work.
+
+```{r echo=FALSE}
+by_transport2 %>%
+  ggplot(aes(x=Year, y=index, color=Type))+
+    geom_line()+ scale_y_continuous(labels = scales::percent)+
+    labs(title="Index each type of transport", subtitle="2005 = 100%", x="Year", y="Growth Rate")
+```
+
+All-in-all, it seems that the users react faster than the infrastructure. The percentage of growth are higher for person-kilometers than vehicule-kilometers.  
+This is a good news that means that the population is already willing to take more of the eco-friendly means of transportation and that the confederation can follow with this willingness by providing the right infrastructures.
 
 # Conclusion
 
-The number of passengers could double by 2050, international tourism is expected to go from 4 billion people to 16 billion by the same year. The growing demand for mobility raises serious questions and conserns, in particular for ecological and public health reasons. We have seen that Swiss people are travelling more and farther, and 73% of the time by car. Against all expectations, the proportion of individual transport put into circulation each year has never been so high (80% of road transport vehicles were light cars in 2017). It appears Switzerland has a lot to on the later, particularly in the passenger transport category where the vehicle fleet renewal is still largely dominated by polluting and fossil fuels.  
+The number of passengers could double by 2050, international tourism is expected to go from 4 billion people to 16 billion by the same year. The growing demand for mobility raises serious questions and concerns, in particular for ecological and public health reasons. We have seen that Swiss people are travelling more and farther, and 73% of the time by car. Against all expectations, the proportion of individual transport put into circulation each year has never been so high (80% of road transport vehicles were light cars in 2017). It appears Switzerland has a lot to on the later, particularly in the passenger transport category where the vehicle fleet renewal is still largely dominated by polluting and fossil fuels.  
 Even if ecological issues are, in our opinion, widely disseminated and present in consciences of the population (as the growing trend towards private electric vehicles shows) we believe that public authorities and transport companies in particular could act more effectively to encourage green mobility. We have seen that "green" fuels represent 1% to 0% of passenger transports vehicle fleet!  
 They could for example implement bonus and malus policies on electric/hybrid motors and gasoline/diesel respectively or provide for the construction of charging stations and/or other systems in order to facilitate the implementation of an electric vehicle fleet. There is also a fairly good trade-off with natural gas propelled vehicles (which powers a majority of buses in France for example).
+
+As for the behavioural aspect, we have seen that the infrastructure of green means of transportation are growing faster than for cars. This positive trend is supported by the fact that people tend to favour even more the green tranportation through their choice of transport.  
+This is a good news that would mean that the government can now follow with their supply of infrastructure since the demand is here.  
+However, there's a black dot here again: people always travel more. It can also be seen in the data that were used on the second part of the report. Even if the means of transportation are greener, energy still needs to be produced which can never be 100% eco-friendly. Studies of the reason behind this increase could give interesting results and solution about teritorial mangagement so that people refrain from commuting too much.
