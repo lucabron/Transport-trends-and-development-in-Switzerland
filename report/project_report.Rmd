@@ -3,7 +3,12 @@ title: "Project Report"
 author: "Bron, Luca and Lapierre, Hadrien"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  html_document: default
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    theme: united
+    highlight: tango
   pdf_document: default
 ---
 
@@ -23,36 +28,40 @@ library(scales)
 ```
 
 # Introduction
-## Overview and Motivation:
+## Overview and Motivation
 
-Last week the “Forum des 100” was held at the University of Lausanne. This year one of the key subject was mobility in Switzerland, and in particular its future. We therefore ask ourselves whether there is a certain trend in the evolution of practices (in terms of passenger transports in particular). We both changed our behavior regarding transportation over the years for various reasons: practical, economic, health, even personal reasons (ecology etc.) or because public authorities have encouraged the use of a particular mean of transport. Now that other means are under study or already in development (flying cars, drones, hyperloop, etc) we are curious to explore a bit the overall situation and behavioral changes of other users in recent years.
+Last week the “Forum des 100” was held at the University of Lausanne. This year one of the key subject was mobility in Switzerland, and in particular its future. We therefore asked ourselves whether there is a certain trend in the evolution of practices (in terms of passenger transports in particular). We all changed our behavior regarding transportation over the years for various reasons: practical, economic, health, more personal reasons (ecology etc.) or because public authorities have encouraged the use of a particular mean of transport. Now that other means are under study or already in development (flying cars, drones, hyperloop, etc) we are curious to explore the overall situation and behavioral changes of other users in recent years.
 
 The project goal is to have a better understanding of transportation dynamics that exist in our country. We will try to identify correlations and other causal links, particularly with the help of market data analysis.
 Understanding market past & current behavior helps to define needs, risks and eventually solutions for the future. We believe that having this information in mind can help decision makers.
 
-## Related Work: 
+## Related Work
 
 Anything that inspired you, such as a paper, a website, or something we discussed in class.
+ - All strategic information related to [soft mobility (fr)](https://www.astra.admin.ch/astra/fr/home/themes/mobilite-douce/dossiers-strategiques-pour-la-mobilite-douce.html)
+ - Useful information on road vehicles in Switzerland [on OFS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.html)
+ - Motorization rate in Switzerland per year per canton [on OFS website](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.assetdetail.4402736.html)
 
-## Initial Questions: 
+## Initial Questions
 
 At first, we have defined the following research questions :
 
 - How has the development of public transport affected the use of private vehicles over the years? To what extent? 
 - What is the link between the investments made in improving public transport networks and the fluctuations in their use?
 
-However, in the course of our analysis we figured the data available to us were not sufficient/precise enough to answer these questions.
+However, in the course of our analysis we figured the data available to us were not sufficient/precise enough to answer those questions.
 
 In addition, in light of our research and the Forum des 100, we are now convinced that the development of transport and more generally mobility will be largely driven by energy considerations. 
 
-**Where do we stand with green mobility in Switzerland ? Have awareness, scientific progress, bonus policies for ecological vehicles etc. really impacted our mobility consumption?**
-Therefore we adress these questions in this report.
+**Where do we stand with green mobility in Switzerland ? Have awareness, scientific progress, bonus policies for ecological vehicles etc. really impacted our consumption of mobility?**
+Therefore we adress those questions in this report.
 
 ## Data
 
 We used data from the Office Fédéral de la Statistique (OFS) mainly : 
 
-- Road vehicle fleet by vehicle group and vehicle type from 1990 to 2017 (retrieve from [OFS website](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.assetdetail.4382325.html))
+- Road vehicle fleet by vehicle groups and vehicle types from 1990 to 2017 (retrieved from [OFS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.assetdetail.4382325.html)). Cleaned up on excel
+- Road vehicles put into circulation by vehicle groups and kinds from 1990 to 2017 (retrieve from [ODS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/routiers-mises-circulation.assetdetail.4382276.html)). Cleanup on excel
 
 
 Source, scraping method, cleanup, etc.
@@ -64,6 +73,7 @@ options(digits = 3) # set precision digits
 parc_tourisme <- read_csv(file = "../data/parc_tourisme_90.csv") %>% as.tibble()
 mec_tourisme <- read_csv(file = "../data/mec_tourisme2.csv") %>% as.tibble()
 parc_moto <- read_csv2(file = "../data/parc_moto.csv") %>% as.tibble()
+mec_transport <- read_csv2(file = "../data/mec_transport.csv") %>% as.tibble()
 
 #Growth rate calculations
 parc_growth <- parc_tourisme %>% 
@@ -86,43 +96,67 @@ parc_tourisme <- parc_tourisme %>% mutate(Annee = as.numeric(Annee))
 #parc_moto formating
 parc_moto <- parc_moto %>% gather(`1990`, `1991`, `1992`, `1993`, `1994`, `1995`, `1996`, `1997`, `1998`, `1999`, `2000`, `2001`, `2002`, `2003`, `2004`, `2005`, `2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, `2013`, `2014`, `2015`, `2016`, `2017` , key = "Annee", value = "N")
 parc_moto <- parc_moto %>% mutate(Annee = as.numeric(Annee))
+
+#mec_transport formatting
+mec_transport <- mec_transport %>% gather(`X1990`, `X1991`, `X1992`, `X1993`, `X1994`, `X1995`, `X1996`, `X1997`, `X1998`, `X1999`, `X2000`, `X2001`, `X2002`, `X2003`, `X2004`, `X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017` , key = "Annee", value = "N")
+mec_transport <- mec_transport %>% mutate(Annee = substring(Annee,2))
+mec_transport <- mec_transport %>% mutate(Annee = as.numeric(Annee))
 ```
 
-# Exploratory Analysis:
+# Exploratory Analysis
 
 ## Green Mobility in Switzerland
 
-To begin with, we looked passenger cars in Switzerland and particularly their fuel type. We see on the graph below that electric vehicles are gradually making their way onto Swiss roads. Even if the electric proportion in the total number of vehicles put into service remains relatively low, we can see from the following graph that there is indeed a trend towards this new mean of propulsion. The data are from the `r mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% summarise(sum(N,na.rm = TRUE))` cars  put into circulation between 2005 and 2017.
+As you will discover in this analysis, we did not cover goods transportation vehicles: according to Mrs Virginie Raisson-Victor from Laboratoire d'études prospectives et d'analyses cartographiques (LEPAC), carbon emissions are more related to the number of passengers rather than freight volume. Moreover, we focused on road vehicles knowing that analyses on rail or air transportation are not relevant to our research question.
+
+To begin with, we looked passenger cars in Switzerland and particularly their fuel type. We wanted to know if Diesel powered vehicles, the most polluting ones, were declining.  
+We can see on the graph below that electric vehicles are gradually making their way onto Swiss roads. Even if the electric proportion in the total number of vehicles put into service remains relatively low, we can see from the following graph that there is indeed a rising trend towards this new mean of propulsion. The data are from the `r mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% summarise(sum(N,na.rm = TRUE))` cars put into circulation between 2005 and 2017. Our most recent data shows that `r mec_tourisme %>% filter(Type == "Voitures de tourisme" & Carburant %in% c("Electrique", "Diesel-electrique", "Essence-electrique") & Annee == "2017") %>% summarise(sum(N, nar.rm = TRUE))` electric or hybrid cars were put into circulation i.e. `r mec_tourisme %>% filter(Type == "Voitures de tourisme" & Carburant %in% c("Electrique", "Diesel-electrique", "Essence-electrique") & Annee == "2017") %>% summarise(sum(N, na.rm = TRUE)) %>% last * 100 / (mec_tourisme %>% filter(Type == "Voitures de tourisme" & Annee == "2017") %>% summarise(sum(N, na.rm = TRUE)))`% of total cars put in circulation in 2017.  
+In 2018, OFS published a [press release](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.assetdetail.4342713.html) which supports our results.
 
 ```{r echo = FALSE}
 mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% 
-  ggplot() + geom_bar(aes(x=Annee,  y=N, fill=fct_reorder(Carburant,N)), position = "fill", stat="identity") +
-  labs(title="Proportion of passenger cars put into circulation in Switzerland per fuel type",x="Annee", y="Proportion", fill="Carburant")+
-  scale_fill_brewer(palette="Paired",labels=c("No engine","Electric-diesel","Other", "Electric","Gas","Electric-gasoline","Diesel", "Gasoline"))
+  ggplot(aes(x=Annee,  y=N, fill=fct_reorder(Carburant,N), label = N)) + geom_bar(position = "fill", stat="identity") + geom_text(data = . %>% filter(Carburant %in% c("Essence", "Diesel")), position = position_fill(vjust = 0.5), angle = 90, color="white") +
+  labs(title="Passenger cars put into circulation in Switzerland per fuel type", subtitle ="In proportion of total",x="Year", y="Proportion", fill="Fuel")+
+  scale_fill_brewer(palette="Paired",labels=c("No engine","Electric-diesel","Other", "Electric","Gas","Electric-gasoline","Diesel", "Gasoline")) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1))
 ```
 
-While the growth rate of diesel and petrol cars have stagnated for several years, the growth rate of electric vehicles is relatively high since 2009 and demonstrates a booming market. Nevertheless, it should be noted that this very high variation (+60%) between 2012 and 2015 has tended to run out of steam since then for an increase of "only" 36% in 2017.
+
+Next, we looked at the car fleet growth to have a more general representation of this evolution: while the growth rate of gasoline car fleet has stagnated for several years, we can see that despite being positive, the evolution of diesel fleet slows down a little more each year. The growth rate of electric vehicles is relatively high since 2009 and demonstrates a booming market. Nevertheless, it should be noted that this very high variation (+60%) between 2012 and 2015 has tended to run out of steam since then, for an increase of "only" 36% in 2017.
 
 ```{r echo = FALSE, warning = FALSE}
 #Let's remove Inf data
 parc_growth %>% filter(Carburant != "Autres")  %>% 
   ggplot(aes(x=Annee, y=T, color=Carburant, na.rm = TRUE)) + 
-  geom_line() + scale_y_continuous(labels = scales::percent) + 
-  labs(title="Passenger car fleet Growth per year and fuel type", x="Year", y="Growth Rate") + 
+  geom_line() + 
+  scale_y_continuous(labels = scales::percent, breaks = seq(-0.1, 0.7, by = 0.1)) +
+  labs(title="Passenger car fleet Growth per year and fuel type", x="Year", y="Growth Rate", color="Fuel") + 
   geom_label_repel(data = . %>% filter(Annee == "2017") %>% mutate(T = round(T,2)), aes(x=Annee, y=T, label = T))+
   scale_color_discrete(labels=c("Diesel","Electric","Gasoline"))
 ```
 
-Now let's take a look at the road passenger transport vehicles (light automobiles, heavy automobiles, buses, minibuses) put into circulation in Switzerland for the last decade. It seems that 99% of the 50'000 vehicles put into circulation are diesel-powered. The data are from the `r mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% summarise(sum(N,na.rm = TRUE))` cars  put into circulation between 2005 and 2017.
+We took a look at the road passenger transport vehicles (light automobiles, heavy automobiles, buses, minibuses) put into circulation in Switzerland for the last decade. Here is the repartition:
+
+``` {r echo=FALSE, message=FALSE, warning=FALSE}
+mec_transport %>% filter(X1 != "total") %>% 
+  ggplot(aes(x=Annee,  y=N, fill=fct_reorder(X1,N), label = N, na.rm=TRUE)) + geom_bar(position = "fill", stat="identity") +
+  labs(title="Transport vehicles put into circulation in Switzerland per type", subtitle ="In proportion of total",x="Year", y="Proportion", fill="Type")+
+  scale_fill_brewer(palette="Paired",labels=c("Bus with pivoting platform", "Heavy automobile", "Bus", "Minibus", "Light car", "Trolleybus", "trolleybus with pivoting platform")) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1))
+```
+
+The data are from the `r mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% summarise(sum(N,na.rm = TRUE))` automobiles put into circulation between 2005 and 2017.  
+It seems that 98% of the 50'000 vehicles put into circulation are diesel-powered in 2017.
 
 ```{r echo = FALSE}
 mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% 
-  ggplot() + geom_bar(aes(x=Annee,  y=N, fill=fct_reorder(Carburant,N)), position = "fill", stat="identity") +
-  labs(title="Proportion of passenger transport vehicles put into circulation in Switzerland per fuel type",x="Year", y="Proportion", fill="Fuel") +
-  scale_fill_brewer(palette="Paired",labels=c("Electric-gasoline","No engine","Other", "Electric","Gas","Diesel-electric", "Gasoline","Diesel"))
+  ggplot(aes(x=Annee,  y=N, fill=fct_reorder(Carburant,N), label = N)) + geom_bar(position = "fill", stat="identity") + geom_text(data = . %>% filter(Carburant == "Diesel"), position = position_fill(vjust=0.5), color="white", angle=90) +
+  labs(title="Passenger transport vehicles put into circulation in Switzerland per fuel type", subtitle="In proportion of total", x="Year", y="Proportion", fill="Fuel") +
+  scale_fill_brewer(palette="Paired",labels=c("Electric-gasoline","No engine","Other", "Electric","Gas","Diesel-electric", "Gasoline","Diesel")) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1))
 ```
 
-To be honest, these numbers are quite suprising for us. Before looking at these data, we thought that public transportations would be the first to make the energy transition ! But it appears the cost for hybrid or electric buses and other public transport is still too high to compete with regular diesel.
+To be honest, these numbers are quite suprising for us. Before looking at these data, we thought that public transportations would be the first to make the energy transition, or at least use less polluting fuel like gasoline (more co2 emissions but far fewer fine particles) ! But it appears the cost for hybrid or electric buses and other public transport is still too high to compete with regular diesel.
 
 To go further :
 
@@ -151,6 +185,7 @@ mec_tourisme %>% filter(Type == "Motocycles") %>%
 
 Interestingly, we observe that electric motorcycles were becoming a thing from 2008 to reach 5% of total motocycle fleet in 2012 and then gradually faded away. We can conclude that there is not really a trend towards electric motocycles like the one we observed in tourism car fleet. Luc Barthassat, State Councillor in charge of mobility [said](https://www.rts.ch/play/radio/intercites/audio/les-ventes-de-motos-electriques-peinent-a-decoller-en-suisse?id=8103614&station=a9e7621504c6959e35c3ecbe7f6bed0446cdf8da) it can be partially explained by the "accessory" nature of these vehicles (standard user does between 3000 and 4000 km per year): users are looking for pleasure of use and a hobby rather than utility or ecology. Moreover, the feeling while driving is a key aspect, things like noise and vibrations matter and this aspect is lost with electric motocycles.
 
+To conclude, it appears Switzerland has a lot to do in terms of ecological propulsion, particularly in the passenger transport category where the vehicle fleet renewal is still largely dominated by fossil fuels. 
 
 ## Comportements: nombre de kilomètres parcourus par type de véhicule / 
 
