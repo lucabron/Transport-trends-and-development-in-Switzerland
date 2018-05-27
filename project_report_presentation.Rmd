@@ -1,0 +1,330 @@
+---
+title: "Transport trends and development in Switzerland"
+subtitle: "Project Report"
+author: "Bron Luca and Lapierre Hadrien"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  ioslides_presentation: default
+  beamer_presentation: default
+  slidy_presentation: default
+---
+
+```{r setup, echo = FALSE, warning = FALSE, message = FALSE}
+#loading packages
+library(knitr)
+library(tidyverse)
+library(lubridate)
+library(modelr)
+library(broom)
+library(ggrepel)
+library(forcats)
+library(directlabels)
+library(ggrepel)
+library(readxl)
+library(scales)
+```
+
+# Introduction
+
+## Initial Questions  
+
+* Where do we stand with green mobility in Switzerland ?  
+* Have awareness, scientific progress, bonus policies for ecological vehicles etc. really impacted our consumption of mobility?
+
+## Data
+
+We used data from the Office Fédéral de la Statistique (OFS) mainly : 
+
+- Road vehicle fleet by vehicle groups and vehicle types from 1990 to 2017 (retrieved from [OFS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.assetdetail.4382325.html)). Cleaned up on excel
+- Road vehicles put into circulation by vehicle groups and kinds from 1990 to 2017 (retrieve from [OFS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/routiers-mises-circulation.assetdetail.4382276.html)). Cleanup on excel
+- Transport of people: kilometric allowance and vehicules movement 2005 to 2016 (retrieve from [OFS website (fr)](https://www.bfs.admin.ch/asset/fr/je-f-11.04.01.01) and [ODS website (fr)](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/transport-personnes/prestations.assetdetail.4083125.html). Cleanup on excel
+
+```{r setup2, echo = FALSE, message=FALSE, warning=FALSE}
+options(digits = 3) # set precision digits
+options(scipen=999) # prevent scientific notation
+
+#Init import
+parc_tourisme <- read_csv(file = "../data/parc_tourisme_90.csv") %>% as.tibble()
+mec_tourisme <- read_csv(file = "../data/mec_tourisme2.csv") %>% as.tibble()
+parc_moto <- read_csv2(file = "../data/parc_moto.csv") %>% as.tibble()
+mec_transport <- read_csv2(file = "../data/mec_transport.csv") %>% as.tibble()
+
+#Growth rate calculations
+parc_growth <- parc_tourisme %>% 
+  transmute(Carburant = Carburant, "2000" = NA, "2001" = (X2001/X2000 - 1), "2002" = (X2002/X2001 - 1), "2003" = (X2003/X2002 - 1), "2004" = (X2004/X2003 - 1), "2005" = (X2005/X2004 - 1), "2006" = (X2006/X2005 - 1) , "2007" = (X2007/X2006 - 1), "2008" = (X2008/X2007 - 1), "2009" = (X2009/X2008 - 1), "2010" = (X2010/X2009 - 1), "2011" = (X2011/X2010 - 1), "2012" = (X2012/X2011 - 1), "2013" = (X2013/X2012 - 1), "2014" = (X2014/X2013 - 1), "2015" = (X2015/X2014 - 1), "2016" = (X2016/X2015 - 1), "2017" = (X2017/X2016 - 1))
+
+#Growth rate formating
+parc_growth <- parc_growth %>% gather(`2000`, `2001`, `2002`, `2003`, `2004`, `2005`, `2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, `2013`, `2014`, `2015`, `2016`, `2017` , key = "Annee", value = "T")
+parc_growth <- parc_growth %>% mutate(Annee = as.numeric(Annee))
+
+#mec_tourism formating
+ mec_tourisme <- mec_tourisme %>% gather(`X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017` , key = "Annee", value = "N")
+mec_tourisme <- mec_tourisme %>% mutate(Annee = substring(Annee,2))
+
+#parc_tourism formating
+parc_tourisme <- parc_tourisme %>% gather(`X2000`, `X2001`, `X2002`, `X2003`, `X2004`, `X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017`, key = "Annee", value = "N")
+parc_tourisme <- parc_tourisme %>% mutate(Annee = substring(Annee,2))
+parc_tourisme <- parc_tourisme %>% mutate(Annee = as.numeric(Annee))
+# colnames(parc_tourisme)[3] <- "Number"
+
+#parc_moto formating
+parc_moto <- parc_moto %>% gather(`1990`, `1991`, `1992`, `1993`, `1994`, `1995`, `1996`, `1997`, `1998`, `1999`, `2000`, `2001`, `2002`, `2003`, `2004`, `2005`, `2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, `2013`, `2014`, `2015`, `2016`, `2017` , key = "Annee", value = "N")
+parc_moto <- parc_moto %>% mutate(Annee = as.numeric(Annee))
+
+#mec_transport formatting
+mec_transport <- mec_transport %>% gather(`X1990`, `X1991`, `X1992`, `X1993`, `X1994`, `X1995`, `X1996`, `X1997`, `X1998`, `X1999`, `X2000`, `X2001`, `X2002`, `X2003`, `X2004`, `X2005`, `X2006`, `X2007`, `X2008`, `X2009`, `X2010`, `X2011`, `X2012`, `X2013`, `X2014`, `X2015`, `X2016`, `X2017` , key = "Annee", value = "N")
+mec_transport <- mec_transport %>% mutate(Annee = substring(Annee,2))
+mec_transport <- mec_transport %>% mutate(Annee = as.numeric(Annee))
+```
+
+# Exploratory Analysis  
+
+## Part One: green mobility in Switzerland
+
+The data are from the `r mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% summarise(sum(N,na.rm = TRUE))` cars put into circulation between 2005 and 2017 i.e. `r mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% summarise(sum(N,na.rm = TRUE)) %>% last/12` on average per year.  
+
+```{r echo = FALSE}
+mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% 
+  ggplot(aes(x=Annee,  y=N, fill=fct_reorder(Carburant,N), label = N)) + geom_bar(position = "fill", stat="identity") + geom_text(data = . %>% filter(Carburant %in% c("Essence", "Diesel")), position = position_fill(vjust = 0.5), angle = 90, color="white") +
+  labs(title="Passenger cars put into circulation in Switzerland per fuel type", subtitle ="In proportion of total",x="Year", y="Proportion", fill="Fuel")+
+  scale_fill_brewer(palette="Paired",labels=c("No engine","Electric-diesel","Other", "Electric","Gas","Electric-gasoline","Diesel", "Gasoline")) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1))
+```
+
+---
+
+```{r echo = FALSE, warning = FALSE}
+#Let's remove Inf data
+parc_growth %>% filter(Carburant != "Autres")  %>% 
+  ggplot(aes(x=Annee, y=T, color=Carburant, na.rm = TRUE)) + 
+  geom_line() + 
+  scale_y_continuous(labels = scales::percent, breaks = seq(-0.1, 0.7, by = 0.1)) +
+  labs(title="Passenger car fleet Growth per year and fuel type", x="Year", y="Growth Rate", color="Fuel") + 
+  geom_label_repel(data = . %>% filter(Annee == "2017") %>% mutate(T = round(T,2)), aes(x=Annee, y=T, label = T))+
+  scale_color_discrete(labels=c("Diesel","Electric","Gasoline"))
+```
+
+---
+
+The data are from the `r mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% summarise(sum(N,na.rm = TRUE))` automobiles put into circulation between 2005 and 2017 i.e. `r mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% summarise(sum(N,na.rm = TRUE)) %>% last/12` on average per year.  
+
+``` {r echo=FALSE, message=FALSE, warning=FALSE}
+mec_transport %>% filter(X1 != "total") %>% 
+  ggplot(aes(x=Annee,  y=N, fill=fct_reorder(X1,N), label = N, na.rm=TRUE)) + geom_bar(position = "fill", stat="identity") +
+  labs(title="Transport vehicles put into circulation in Switzerland per type", subtitle ="In proportion of total",x="Year", y="Proportion", fill="Type")+
+  scale_fill_brewer(palette="Paired",labels=c("Bus with pivoting platform", "Heavy automobile", "Bus", "Minibus", "Light car", "Trolleybus", "trolleybus with pivoting platform")) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1))
+```
+
+---
+
+```{r echo = FALSE}
+mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>% 
+  ggplot(aes(x=Annee,  y=N, fill=fct_reorder(Carburant,N), label = N)) + geom_bar(position = "fill", stat="identity") + geom_text(data = . %>% filter(Carburant == "Diesel"), position = position_fill(vjust=0.5), color="white", angle=90) +
+  labs(title="Passenger transport vehicles put into circulation in Switzerland per fuel type", subtitle="In proportion of total", x="Year", y="Proportion", fill="Fuel") +
+  scale_fill_brewer(palette="Paired",labels=c("Electric-gasoline","No engine","Other", "Electric","Gas","Diesel-electric", "Gasoline","Diesel")) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1))
+```
+
+---
+
+```{r echo = FALSE} 
+#parc_tourisme %>% aggregate(N, by=list(Annee=Annee), fun=SUM)
+parc_moto %>% filter(X1 == "Total_moto") %>% ggplot(aes(x=Annee, y=N)) + geom_line() +
+  labs(title="Evolution of motocycle fleet from 1990 to 2017", x="Year", y="Number") +
+  scale_y_continuous(labels = comma) +
+  geom_label_repel(data = . %>% filter(Annee == "2017"), aes(x=Annee, y=N, label = N))
+```
+
+---
+
+The data are from the `r parc_moto %>% filter(X1 == "Total_moto") %>% summarise(sum(N,na.rm = TRUE))` motocycles put into circulation between 1990 and 2017 i.e. `r parc_moto %>% filter(X1 == "Total_moto") %>% summarise(sum(N,na.rm = TRUE)) %>% last/27` on average per year.  
+
+``` {r echo = FALSE}
+mec_tourisme %>% filter(Type == "Motocycles") %>% 
+  ggplot() + geom_bar(aes(x=Annee,  y=N, fill=fct_reorder(Carburant,N)), position = "fill", stat="identity") +
+  labs(title="Proportion of motocycles put into circulation in Switzerland per fuel type",x="Year", y="Proportion", fill="Fuel") +
+  scale_fill_brewer(palette="Paired", labels=c("Electric-diesel","Gas","No engine", "Other", "Electric-gasoline", "Diesel", "Electric", "Gasoline")) 
+```
+
+## Part Two: Difference between types of vehicules  
+
+```{r echo=FALSE, message=FALSE}
+#Data preparation kilometer-vehicule
+kil_vehic <- read_excel("../data/personnes_prestations.xlsx")%>% as.tibble()
+kil_vehic <- kil_vehic %>% gather("Train", "Tram","Trolleybus","Autobus","Private_car","Private_bus","Motorbike","Moped", key = "Type", value = "Vehic_km") %>% mutate(Year = as.numeric(Year), Vehic_km = as.numeric(Vehic_km))
+kil_vehic <- kil_vehic %>% filter(Year!=2017)
+
+#Data preparation kilometer-person
+kil_pers <- read_excel("../data/personnes_prestations2.xls")%>% as.tibble()
+kil_pers <- kil_pers %>% gather("Train", "Tram","Trolleybus","Autobus","Private_car","Private_bus","Motorbike","Moped", key = "Type", value = "Pers_km") %>%
+mutate(Year = as.numeric(Year), Pers_km = as.numeric(Pers_km))
+kil_pers <- kil_pers %>% filter(Year!=2017)
+
+kilometers <- kil_vehic %>% full_join(kil_pers) 
+```
+
+Infrastructure and vehicule-kilometer
+
+```{r echo = FALSE}
+kilometers %>% 
+  ggplot() +
+    geom_area(aes(x=Year,  y=Vehic_km, fill=fct_reorder(Type,Vehic_km))) +
+    labs(title="Amount of vehicule-kilometers", subtitle="in billion",x="Year", y="Vehicule-kilometers", fill="Type")+
+    scale_fill_brewer(palette="Paired")
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+by_transport <- kilometers %>% group_by(Type) %>% nest
+#nest by transport type
+transport_model1 <- function(df) {lm(Vehic_km ~ Year, data=df)}
+#creates the models fitting functions
+
+by_transport1 <- by_transport %>% 
+  mutate(model = purrr::map(data, transport_model1))
+#create a new column for the nested models so that the related objects are stored together
+
+by_transport1 <- by_transport1 %>% 
+  mutate(predictions = purrr::map2(data, model, add_predictions), resids = purrr::map2(data, model, add_residuals))
+#create a new column for the nested predictions and residuals of the model
+
+by_transport3 <- by_transport1 %>% 
+  mutate(tidy = purrr::map(model, broom::tidy)) %>% 
+  unnest(tidy, .drop = TRUE) %>%
+  filter(term=="Year")
+#unnesting the data. Retrieving the coefficients and their statistics
+
+by_transport3 %>% 
+  select(-term,-statistic,-p.value) %>%
+  kable(caption="Yearly increase", align='c',digits=3, 
+  col.names = c("Type","Prediction", "STDE"))
+##showing the coefficients and their statistics
+
+by_transport1 <- unnest(by_transport1,predictions) %>% full_join(unnest(by_transport1,resids)) %>% mutate(prop_resid=resid/pred)
+##recreate the two tibble and adding a column with proportional residuals
+
+by_transport1 <- by_transport1 %>% left_join(by_transport3) %>% select(-term,-std.error,-statistic,-p.value)
+##merge the two tables
+
+mutateRbind <- function(left, right) {
+    right <- mutate(right, index=map_dbl(right$Vehic_km, function(x) x/right$Vehic_km[1]))
+    left <- rbind(left, right)
+    return(left)
+}
+
+grpTables1 <- by_transport1 %>% split(by_transport1$Type)
+
+emptyTable1 <-  data.frame(matrix(nrow = 0, ncol = 10))
+
+by_transport1 <- reduce(grpTables1, mutateRbind, .init=emptyTable1)
+
+by_transport1 %>% 
+  ggplot(aes(Type, prop_resid))+
+  geom_boxplot()+
+  labs(title="Proportional residuals per type of transport", x="Year",y="Residuals")
+#Generates graph of residuals per type of car
+
+by_transport1 %>%
+  ggplot(aes(Year, prop_resid, group=Type)) +
+    geom_line()+
+    facet_wrap(~Type,scales = "free_y")+
+    labs(y="Residuals over prediction")
+#plot the residuals variance
+```
+
+## Increase of the tranportation types
+
+```{r echo=FALSE}
+by_transport1 %>%
+  ggplot(aes(x=Year, y=index, color=Type))+
+    geom_line()+ scale_y_continuous(labels = scales::percent)+
+    labs(title="Index for each type of transport", subtitle="2005 = 100%", x="Year", y="Growth Rate")
+```
+
+## People in Switzerland always travel more  
+
+```{r echo=FALSE}
+kilometers %>% group_by(Year) %>% summarize(Pers_km=round(sum(Pers_km))) %>%
+  ggplot(aes(x=Year, y=(Pers_km)))+
+    geom_line()+
+    labs(title="Increase of person-kilometers", subtitle="in billion", x="Year",y="Person-kilometers") +
+    geom_label_repel(data = . %>% filter(Year == "2016"), aes(x=Year, y=Pers_km, label = Pers_km))
+```
+
+## Behaviour and person-kilometer
+
+```{r echo = FALSE}
+kilometers %>% 
+  ggplot() + geom_area(aes(x=Year,  y=Pers_km, fill=fct_reorder(Type,Pers_km))) +
+ labs(title="Amount of person-kilometers", subtitle="in billion",x="Year", y="Person-kilometers", fill="Type")+
+  scale_fill_brewer(palette="Paired")
+```
+
+```{r echo=FALSE, include=FALSE}
+transport_model2 <- function(df) {lm(Pers_km ~ Year, data=df)}
+#creates the models fitting functions
+
+by_transport2 <- by_transport %>% 
+  mutate(model = purrr::map(data, transport_model2))
+#create a new column for the nested models so that the related objects are stored together
+
+by_transport2 <- by_transport2 %>% 
+  mutate(predictions = purrr::map2(data, model, add_predictions), resids = purrr::map2(data, model, add_residuals))
+#create a new column for the nested predictions and residuals of the model
+
+by_transport4 <- by_transport2 %>% 
+  mutate(tidy = purrr::map(model, broom::tidy)) %>% 
+  unnest(tidy, .drop = TRUE) %>%
+  filter(term=="Year")
+#unnesting the data. Retrieving the coefficients and their statistics
+
+by_transport4 %>% 
+  select(-statistic,-p.value,-term) %>%
+  kable(caption="Yearly increase", align='c',digits=3, 
+  col.names = c("Type","Prediction", "STDE"))
+##retriewing the coefficients and their statistics
+
+by_transport2 <- unnest(by_transport2,predictions) %>% full_join(unnest(by_transport2,resids)) %>% mutate(prop_resid=resid/pred)
+##recreate the two tibble and adding a column with proportional residuals
+
+by_transport2 <- by_transport2 %>% left_join(by_transport4) %>% select(-term,-std.error,-statistic,-p.value)
+##merge the two tables
+
+mutateRbind <- function(left, right) {
+    right <- mutate(right, index=map_dbl(right$Pers_km, function(x) x/right$Pers_km[1]))
+    left <- rbind(left, right)
+    return(left)
+}
+
+grpTables2 <- by_transport2 %>% split(by_transport2$Type)
+
+emptyTable2 <-  data.frame(matrix(nrow = 0, ncol = 10))
+
+by_transport2 <- reduce(grpTables2, mutateRbind, .init=emptyTable2)
+
+by_transport2 %>% 
+  ggplot(aes(Type, prop_resid))+
+  geom_boxplot()+
+  labs(title="Proportional residuals per type of transport", x="Year",y="Residuals")
+#Generates graph of residuals per type of car
+
+by_transport2 %>%
+  ggplot(aes(Year, prop_resid, group=Type)) +
+    geom_line()+
+    facet_wrap(~Type,scales = "free_y")+
+    labs(y="Residuals over prediction")
+#plot the residuals variance
+```
+
+## Increase of the tranportation types
+
+```{r echo=FALSE}
+by_transport2 %>%
+  ggplot(aes(x=Year, y=index, color=Type))+
+    geom_line()+ scale_y_continuous(labels = scales::percent)+
+    labs(title="Index each type of transport", subtitle="2005 = 100%", x="Year", y="Growth Rate")
+```
+
+# Conclusion
+
+# Thanks! Questions?
