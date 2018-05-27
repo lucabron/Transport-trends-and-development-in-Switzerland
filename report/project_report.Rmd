@@ -55,7 +55,7 @@ However, in the course of our analysis we figured the data available to us were 
 
 In addition, in light of our research and the Forum des 100, we are now convinced that the development of transport and more generally mobility will be largely driven by energy considerations. 
 
-**Where do we stand with green mobility in Switzerland ? Have awareness, scientific progress, bonus policies for ecological vehicles etc. really impacted our consumption of mobility?**
+**Where do we stand with green mobility in Switzerland? Have awareness, scientific progress, bonus policies for ecological vehicles etc. really impacted our consumption of mobility?**
 Therefore we adress those questions in this report.
 
 ## Data
@@ -70,6 +70,7 @@ Source, scraping method, cleanup, etc.
 
 ```{r setup2, echo = FALSE, message=FALSE, warning=FALSE}
 options(digits = 3) # set precision digits
+options(scipen=999) # prevent scientific notation
 
 #Init import
 parc_tourisme <- read_csv(file = "../data/parc_tourisme_90.csv") %>% as.tibble()
@@ -111,7 +112,7 @@ mec_transport <- mec_transport %>% mutate(Annee = as.numeric(Annee))
 
 As you will discover in this analysis, we did not cover goods transportation vehicles: according to Mrs Virginie Raisson-Victor from Laboratoire d'études prospectives et d'analyses cartographiques (LEPAC), carbon emissions are more related to the number of passengers rather than freight volume. Moreover, we focused on road vehicles knowing that analyses on rail or air transportation are not relevant to our research question.
 
-To begin with, we looked passenger cars in Switzerland and particularly their fuel type. We wanted to know if Diesel powered vehicles, the most polluting ones, were declining.  
+To begin with, we looked at passenger cars in Switzerland and particularly their fuel type. We wanted to know if Diesel powered vehicles, the most polluting ones, were declining.  
 We can see on the graph below that electric vehicles are gradually making their way onto Swiss roads. Even if the electric proportion in the total number of vehicles put into service remains relatively low, we can see from the following graph that there is indeed a rising trend towards this new mean of propulsion. The data are from the `r mec_tourisme %>% filter(Type == "Voitures de tourisme") %>% summarise(sum(N,na.rm = TRUE))` cars put into circulation between 2005 and 2017. Our most recent data shows that `r mec_tourisme %>% filter(Type == "Voitures de tourisme" & Carburant %in% c("Electrique", "Diesel-electrique", "Essence-electrique") & Annee == "2017") %>% summarise(sum(N, nar.rm = TRUE))` electric or hybrid cars were put into circulation i.e. `r mec_tourisme %>% filter(Type == "Voitures de tourisme" & Carburant %in% c("Electrique", "Diesel-electrique", "Essence-electrique") & Annee == "2017") %>% summarise(sum(N, na.rm = TRUE)) %>% last * 100 / (mec_tourisme %>% filter(Type == "Voitures de tourisme" & Annee == "2017") %>% summarise(sum(N, na.rm = TRUE)))`% of total cars put in circulation in 2017.  
 In 2018, OFS published a [press release](https://www.bfs.admin.ch/bfs/fr/home/statistiques/mobilite-transports/infrastructures-transport-vehicules/vehicules/vehicules-routiers-parc-taux-motorisation.assetdetail.4342713.html) which supports our results.
 
@@ -158,7 +159,7 @@ mec_tourisme %>% filter(Type == "Vehicules de transport de personnes") %>%
   scale_y_continuous(breaks = seq(0, 1, by = 0.1))
 ```
 
-To be honest, these numbers are quite suprising for us. Before looking at these data, we thought that public transportations would be the first to make the energy transition, or at least use less polluting fuel like gasoline (more co2 emissions but far fewer fine particles) ! But it appears the cost for hybrid or electric buses and other public transport is still too high to compete with regular diesel.
+To be honest, these numbers are quite suprising for us. Before looking at these data, we thought that public transportations would be the first to make the energy transition, or at least use less polluting fuel like gasoline (more co2 emissions but far fewer fine particles)! But it appears the cost for hybrid or electric buses and other public transport is still too high to compete with regular diesel.
 
 To go further :
 
@@ -186,8 +187,6 @@ mec_tourisme %>% filter(Type == "Motocycles") %>%
 ```
 
 Interestingly, we observe that electric motorcycles were becoming a thing from 2008 to reach 5% of total motocycle fleet in 2012 and then gradually faded away. We can conclude that there is not really a trend towards electric motocycles like the one we observed in tourism car fleet. Luc Barthassat, State Councillor in charge of mobility [said](https://www.rts.ch/play/radio/intercites/audio/les-ventes-de-motos-electriques-peinent-a-decoller-en-suisse?id=8103614&station=a9e7621504c6959e35c3ecbe7f6bed0446cdf8da) it can be partially explained by the "accessory" nature of these vehicles (standard user does between 3000 and 4000 km per year): users are looking for pleasure of use and a hobby rather than utility or ecology. Moreover, the feeling while driving is a key aspect, things like noise and vibrations matter and this aspect is lost with electric motocycles.
-
-To conclude, it appears Switzerland has a lot to do in terms of ecological propulsion, particularly in the passenger transport category where the vehicle fleet renewal is still largely dominated by fossil fuels.  
 
 ## Difference between types of vehicules  
 
@@ -351,4 +350,6 @@ The one meaningful difference that is observable is in the graph of the relative
 
 # Conclusion
 
-What did you learn about the data? How did you answer the questions? How can you justify your answers?
+The number of passengers could double by 2050, international tourism is expected to go from 4 billion people to 16 billion by the same year. The growing demand for mobility raises serious questions and conserns, in particular for ecological and public health reasons. We have seen that Swiss people are travelling more and farther, and 73% of the time by car. Against all expectations, the proportion of individual transport put into circulation each year has never been so high (80% of road transport vehicles were light cars in 2017). It appears Switzerland has a lot to on the later, particularly in the passenger transport category where the vehicle fleet renewal is still largely dominated by polluting and fossil fuels.  
+Even if ecological issues are, in our opinion, widely disseminated and present in consciences of the population (as the growing trend towards private electric vehicles shows) we believe that public authorities and transport companies in particular could act more effectively to encourage green mobility. We have seen that "green" fuels represent 1% to 0% of passenger transports vehicle fleet!  
+They could for example implement bonus and malus policies on electric/hybrid motors and gasoline/diesel respectively or provide for the construction of charging stations and/or other systems in order to facilitate the implementation of an electric vehicle fleet. There is also a fairly good trade-off with natural gas propelled vehicles (which powers a majority of buses in France for example).
