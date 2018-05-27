@@ -174,9 +174,9 @@ kilometers %>%
     scale_fill_brewer(palette="Paired")
 ```
 
----
+## Increase of the tranportation types
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 by_transport <- kilometers %>% group_by(Type) %>% nest
 #nest by transport type
 transport_model1 <- function(df) {lm(Vehic_km ~ Year, data=df)}
@@ -253,6 +253,7 @@ kilometers %>% group_by(Year) %>% summarize(Pers_km=round(sum(Pers_km))) %>%
 ```
 
 ---
+Behaviour and person-kilometer
 
 ```{r echo = FALSE}
 kilometers %>% 
@@ -261,7 +262,7 @@ kilometers %>%
   scale_fill_brewer(palette="Paired")
 ```
 
----
+## Increase of the tranportation types
 
 ```{r echo=FALSE}
 transport_model2 <- function(df) {lm(Pers_km ~ Year, data=df)}
