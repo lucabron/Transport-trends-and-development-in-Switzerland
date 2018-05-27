@@ -174,8 +174,6 @@ kilometers %>%
     scale_fill_brewer(palette="Paired")
 ```
 
-## Increase of the tranportation types
-
 ```{r echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 by_transport <- kilometers %>% group_by(Type) %>% nest
 #nest by transport type
@@ -234,15 +232,16 @@ by_transport1 %>%
 #plot the residuals variance
 ```
 
+## Increase of the tranportation types
+
 ```{r echo=FALSE}
 by_transport1 %>%
   ggplot(aes(x=Year, y=index, color=Type))+
     geom_line()+ scale_y_continuous(labels = scales::percent)+
     labs(title="Index for each type of transport", subtitle="2005 = 100%", x="Year", y="Growth Rate")
 ```
----
 
-People in Switzerland always travel more.  
+## People in Switzerland always travel more  
 
 ```{r echo=FALSE}
 kilometers %>% group_by(Year) %>% summarize(Pers_km=round(sum(Pers_km))) %>%
@@ -252,8 +251,7 @@ kilometers %>% group_by(Year) %>% summarize(Pers_km=round(sum(Pers_km))) %>%
     geom_label_repel(data = . %>% filter(Year == "2016"), aes(x=Year, y=Pers_km, label = Pers_km))
 ```
 
----
-Behaviour and person-kilometer
+## Behaviour and person-kilometer
 
 ```{r echo = FALSE}
 kilometers %>% 
@@ -262,9 +260,7 @@ kilometers %>%
   scale_fill_brewer(palette="Paired")
 ```
 
-## Increase of the tranportation types
-
-```{r echo=FALSE}
+```{r echo=FALSE, include=FALSE}
 transport_model2 <- function(df) {lm(Pers_km ~ Year, data=df)}
 #creates the models fitting functions
 
@@ -320,12 +316,15 @@ by_transport2 %>%
 #plot the residuals variance
 ```
 
+## Increase of the tranportation types
+
 ```{r echo=FALSE}
 by_transport2 %>%
   ggplot(aes(x=Year, y=index, color=Type))+
     geom_line()+ scale_y_continuous(labels = scales::percent)+
     labs(title="Index each type of transport", subtitle="2005 = 100%", x="Year", y="Growth Rate")
 ```
+
 # Conclusion
 
 # Thanks! Questions?
