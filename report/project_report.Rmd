@@ -208,7 +208,7 @@ kil_pers <- kil_pers %>% filter(Year!=2017)
 kilometers <- kil_vehic %>% full_join(kil_pers) 
 ```
 
-## Infrastructure and vehicule-kilometer
+### Infrastructure and vehicule-kilometer
 
 For this first analysis, we observe the amount of vehicule-kilometer which corresponds in billion to the number of kilometers traveled by each vehicule type.  
 This statistic by itself is not the most interesting. It's like comparing apple to oranges since a car can contain one to six people whereas a train contains hundreds. The first graph show that private car is the main transport by far, and this needs to be taken with a grain of salt.  
@@ -281,7 +281,7 @@ by_transport1 %>%
 The first table shows the predicition of the yearly increase for each transportation type. The raw data is the not the most interesting and that's why the second table was build to see the flat increase year by year as well as the percentage increase compared to 2005. This last result was then plotted to compare they different transport types.  
 Looking at the residuals, it was first needed to be able to compare them between classes. Since Private_car was so big compared to the other, we create a measure of the residuals proportional to their predictors. Looking at the output, we see that the growth is much more stable for cars and trains than for trams. Lastly, a graph was made to see if there's a correlation of the residuals between types of tranportation. If we see a pattern of residuals through all the graphs, that would mean that there were some similare fluctuations in different types at the same time. However, we do not observe this here.  
 
-## Behaviour and person-kilometer
+### Behaviour and person-kilometer
 
 Similarly from the statistic that was used previously, here the analysis is on person-kilometer which is in billion the nummber of kilometers traveled by people for each vehicule type. Here, the statistic is much more understandable and that's the one that'd be use in the rest of this section.  
 
