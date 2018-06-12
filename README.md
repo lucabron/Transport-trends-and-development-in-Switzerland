@@ -1,1 +1,1 @@
-# group1_2018_project
+This is the final project of my university course "Data Science for Business Analytics" that I publicly upload on Github to showcase my work and my abilities on R used for data science with the help of tidyr, knitr, ggplot2 and RMarkdown.
